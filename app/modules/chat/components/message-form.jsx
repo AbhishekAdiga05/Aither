@@ -71,7 +71,7 @@ export default function MessageForm({
             placeholder="Type your message here..."
             maxRows={8}
             aria-label="Your message"
-            className="w-full resize-none border-0 bg-transparent px-5 pt-4 pb-2 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/50"
+            className="w-full resize-none border-0 bg-transparent px-5 pt-4 pb-2 text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/50"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();

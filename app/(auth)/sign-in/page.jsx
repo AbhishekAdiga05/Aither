@@ -3,7 +3,9 @@
 import React from "react";
 import Image from "next/image";
 import { toast } from "sonner";
-import { GithubIcon, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { GithubIcon, Loader2, TriangleAlert } from "lucide-react";
+import { Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/auth-client";
@@ -43,11 +45,50 @@ const PROVIDER_META = {
 
 const providerErrorHint = (provider) =>
   provider === "github"
-    ? "Configure the callback URL http://<your-domain>/api/auth/callback/github in GitHub settings."
-    : "Configure the callback URL http://<your-domain>/api/auth/callback/google in Google Cloud Console.";
+    ? "Add http://<your-domain>/api/auth/callback/github to the GitHub OAuth app's callback URLs."
+    : "Add http://<your-domain>/api/auth/callback/google to the Google Cloud Console's authorized redirect URIs.";
 
-const LoginPage = () => {
+const OAUTH_ERROR_MESSAGES = {
+  signup_disabled:
+    "This account isn't invited yet — sign-ups are currently disabled.",
+  access_denied: "The sign-in request was cancelled.",
+  invalid_origin:
+    "Sign-in failed: the request came from an untrusted origin. If you're testing on your phone, open the exact URL shown by the dev server.",
+  oauth_provider_not_found: "The sign-in provider isn't configured.",
+  invalid_callback_url:
+    "The sign-in redirect is invalid. Re-try from the app's home address.",
+  no_callback_url:
+    "The sign-in redirect is invalid. Re-try from the app's home address.",
+  internal_server_error:
+    "Something went wrong on our side. Please try again in a moment.",
+  failed_to_verify_code: "The sign-in couldn't be verified. Please try again.",
+  unable_to_get_user_info:
+    "We couldn't fetch your profile from the provider. Please try again.",
+  account_already_linked_to_different_user:
+    "This account is linked to a different user already.",
+};
+
+const describeOAuthError = (error) => {
+  if (!error) return null;
+  const key = Object.keys(OAUTH_ERROR_MESSAGES).find((code) =>
+    error.toLowerCase().includes(code.replaceAll("_", " ")),
+  );
+  return key ? OAUTH_ERROR_MESSAGES[key] : null;
+};
+
+const SignInContent = () => {
   const [isLoadingProvider, setIsLoadingProvider] = React.useState(null);
+  const searchParams = useSearchParams();
+  const oauthError = searchParams.get("error");
+  const oauthErrorText = describeOAuthError(oauthError);
+
+  React.useEffect(() => {
+    if (oauthErrorText) {
+      toast.error("Sign-in failed", {
+        description: oauthErrorText,
+      });
+    }
+  }, [oauthErrorText]);
 
   const handleSocialSignIn = async (provider) => {
     if (isLoadingProvider) return;
@@ -69,7 +110,7 @@ const LoginPage = () => {
   };
 
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4 py-10 pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
+    <section className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-background px-4 py-8 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] pt-[calc(env(safe-area-inset-top)+1.5rem)]">
       <div className="w-full max-w-md animate-in fade-in zoom-in duration-700">
         <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-6 text-center shadow-sm sm:p-10">
           <div className="mb-8 rounded-2xl bg-muted/60 p-4">
@@ -84,7 +125,7 @@ const LoginPage = () => {
             />
           </div>
 
-          <div className="mb-10 space-y-2">
+          <div className="mb-8 space-y-2">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
               Welcome back
             </h1>
@@ -92,6 +133,16 @@ const LoginPage = () => {
               Sign in to access your AI-powered workspace
             </p>
           </div>
+
+          {oauthErrorText && (
+            <div
+              role="alert"
+              className="mb-6 flex w-full items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 px-3.5 py-3 text-left text-sm text-destructive"
+            >
+              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{oauthErrorText}</span>
+            </div>
+          )}
 
           <div className="flex w-full flex-col gap-3">
             {PROVIDER_ORDER.map((provider) => {
@@ -110,6 +161,7 @@ const LoginPage = () => {
                   className={cn(
                     "group relative flex h-12 w-full items-center justify-center rounded-md border-border bg-background text-sm font-medium shadow-sm transition-colors",
                     "hover:bg-accent hover:text-accent-foreground",
+                    "active:scale-[0.99]",
                     isDisabled && "cursor-not-allowed opacity-70",
                   )}
                 >
@@ -134,6 +186,14 @@ const LoginPage = () => {
         </div>
       </div>
     </section>
+  );
+};
+
+const LoginPage = () => {
+  return (
+    <Suspense fallback={null}>
+      <SignInContent />
+    </Suspense>
   );
 };
 

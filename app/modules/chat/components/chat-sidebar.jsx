@@ -214,7 +214,7 @@ return (
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60 group-focus-within/search:text-primary transition-colors pointer-events-none" />
           <Input
             placeholder="Search chats..."
-            className="pl-10 pr-9 h-10 text-sm bg-sidebar-accent/40 border-sidebar-border rounded-md focus-visible:ring-1 focus-visible:ring-foreground/20 focus-visible:border-foreground/30"
+            className="pl-10 pr-9 h-10 text-base md:text-sm bg-sidebar-accent/40 border-sidebar-border rounded-md focus-visible:ring-1 focus-visible:ring-foreground/20 focus-visible:border-foreground/30"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />

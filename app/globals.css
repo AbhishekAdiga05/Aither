@@ -149,6 +149,21 @@
   ::selection {
     background-color: color-mix(in oklch, var(--foreground) 20%, transparent);
   }
+
+  /* Mobile/touch UX: kill the tap highlight flash and double-tap zoom delay */
+  @media (pointer: coarse) {
+    html {
+      -webkit-tap-highlight-color: transparent;
+    }
+    button,
+    [role="button"],
+    a,
+    input,
+    textarea,
+    select {
+      touch-action: manipulation;
+    }
+  }
 }
 
 @layer base {
