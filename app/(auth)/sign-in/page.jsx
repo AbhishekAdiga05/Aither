@@ -10,6 +10,7 @@ import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 
 const PROVIDER_ORDER = ["github", "google"];
 
@@ -76,11 +77,52 @@ const describeOAuthError = (error) => {
   return key ? OAUTH_ERROR_MESSAGES[key] : null;
 };
 
+const SIGN_IN_RATE_LIMITED =
+  "Too many sign-in attempts — wait a minute and try again.";
+
+const handleSocialSignInError = ({ provider, error }) => {
+  const serverMessage = error?.error?.message ?? error?.message;
+
+  if (/rate limit|too many attempts/i.test(serverMessage ?? "")) {
+    toast.error("Slow down", { description: SIGN_IN_RATE_LIMITED });
+    return;
+  }
+
+  if (/provider not found/i.test(serverMessage ?? "")) {
+    toast.error(`${provider} sign-in isn't set up yet`, {
+      description: `This rarely happens locally and usually means the ${provider.toUpperCase()}_CLIENT_ID / ${provider.toUpperCase()}_CLIENT_SECRET environment variables are missing on the server. Add them in your hosting dashboard and redeploy.`,
+    });
+    return;
+  }
+
+  toast.error("Sign-in failed", {
+    description: serverMessage || providerErrorHint(provider),
+  });
+};
+
 const SignInContent = () => {
   const [isLoadingProvider, setIsLoadingProvider] = React.useState(null);
   const searchParams = useSearchParams();
   const oauthError = searchParams.get("error");
   const oauthErrorText = describeOAuthError(oauthError);
+
+  // Which providers are configured on the server (env vars present).
+  const { data: providerStatus } = useQuery({
+    queryKey: ["auth-providers"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/providers", {
+        headers: { "cache-control": "no-store" },
+      });
+      if (!res.ok) throw new Error("Failed to read provider status");
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+  const configuredProviders = providerStatus?.providers ?? [];
+  const providersLoaded = Array.isArray(providerStatus?.providers);
+  const unconfiguredProviders = providersLoaded
+    ? PROVIDER_ORDER.filter((provider) => !configuredProviders.includes(provider))
+    : [];
 
   React.useEffect(() => {
     if (oauthErrorText) {
@@ -94,19 +136,19 @@ const SignInContent = () => {
     if (isLoadingProvider) return;
 
     setIsLoadingProvider(provider);
+    let result;
     try {
-      await signIn.social({
+      result = await signIn.social({
         provider,
         callbackURL: "/",
       });
     } catch (error) {
       console.error(`${provider} sign-in error:`, error);
-      toast.error("Sign-in failed. Please try again.", {
-        description: providerErrorHint(provider),
-      });
+      handleSocialSignInError({ provider, error });
     } finally {
       setIsLoadingProvider(null);
     }
+    return result;
   };
 
   return (
@@ -144,25 +186,47 @@ const SignInContent = () => {
             </div>
           )}
 
+          {unconfiguredProviders.length > 0 && (
+            <div
+              role="alert"
+              className="mb-6 flex w-full items-start gap-2.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3.5 py-3 text-left text-sm text-amber-600 dark:text-amber-400"
+            >
+              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                {unconfiguredProviders
+                  .map((p) => `${p.toUpperCase()}_CLIENT_ID`)
+                  .join(" and ")}{" "}
+                {unconfiguredProviders.length === 1 ? "is" : "are"} missing on
+                the server, so {unconfiguredProviders.join(" and ")} sign-in{" "}
+                {unconfiguredProviders.length === 1 ? "is" : "are"} unavailable.
+                Add the OAuth credentials (client ID + secret) in your hosting
+                environment and redeploy.
+              </span>
+            </div>
+          )}
+
           <div className="flex w-full flex-col gap-3">
             {PROVIDER_ORDER.map((provider) => {
               const meta = PROVIDER_META[provider];
               const Icon = meta.Icon;
               const isWorking = isLoadingProvider === provider;
               const isDisabled = isLoadingProvider !== null;
+              const isConfigured = !configuredProviders.length
+                ? true // data not loaded yet — stay optimistic, don't flash
+                : configuredProviders.includes(provider);
 
               return (
                 <Button
                   key={provider}
                   type="button"
                   variant="outline"
-                  disabled={isDisabled}
+                  disabled={!isConfigured || isDisabled}
                   onClick={() => handleSocialSignIn(provider)}
                   className={cn(
                     "group relative flex h-12 w-full items-center justify-center rounded-md border-border bg-background text-sm font-medium shadow-sm transition-colors",
                     "hover:bg-accent hover:text-accent-foreground",
                     "active:scale-[0.99]",
-                    isDisabled && "cursor-not-allowed opacity-70",
+                    (!isConfigured || isDisabled) && "cursor-not-allowed opacity-70",
                   )}
                 >
                   {isWorking && (
