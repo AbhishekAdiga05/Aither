@@ -115,3 +115,15 @@ model Message {
   @@index([chatId, createdAt])
   @@map("message")
 }
+
+// better-auth built-in rate limiting (database storage).
+// `lastRequest` stores epoch milliseconds as a BigInt — better-auth writes an
+// integer timestamp, not a DateTime.
+model rateLimit {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  count       Int      @default(0)
+  lastRequest BigInt   @default(0)
+
+  @@map("rateLimit")
+}

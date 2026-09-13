@@ -1,22 +1,22 @@
 import "./globals.css";
+import { headers } from "next/headers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ui/providers/theme-provider";
 import { QueryProvider } from "@/components/ui/providers/query-provider";
 
 export const metadata = {
-  title: "Neon Chat",
+  title: "AI Chat",
   description: "AI-powered chat application",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") ?? undefined;
+
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="antialiased relative min-h-screen">
-        {/* Ambient Neon Background Glows */}
-        <div className="fixed top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/15 blur-[120px] pointer-events-none -z-10 animate-pulse duration-10000" />
-        <div className="fixed bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/10 blur-[150px] pointer-events-none -z-10" />
-
+      <body className="antialiased min-h-screen">
         <QueryProvider>
           <TooltipProvider>
             <ThemeProvider
@@ -24,6 +24,7 @@ export default function RootLayout({ children }) {
               defaultTheme="system"
               enableSystem
               disableTransitionOnChange
+              nonce={nonce}
             >
               {children}
             </ThemeProvider>

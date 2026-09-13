@@ -310,7 +310,7 @@ function CodeBlock({ language, code }) {
         <CopyButton
           value={code}
           label="Copy code"
-          className="text-zinc-100 opacity-0 transition group-hover/code:opacity-100 hover:bg-white/10 hover:text-white focus-visible:opacity-100"
+          className="text-zinc-100 opacity-100 sm:opacity-0 sm:transition sm:group-hover/code:opacity-100 hover:bg-white/10 hover:text-white focus-visible:opacity-100"
         />
       </div>
       <pre className="overflow-x-auto px-4 py-4 text-sm leading-7 text-zinc-100">
@@ -376,7 +376,7 @@ function renderTextBlock(block, index) {
     return (
       <div
         key={`table-${index}`}
-        className="overflow-hidden rounded-2xl border border-border/70 bg-background/70"
+        className="overflow-x-auto rounded-2xl border border-border/70 bg-background/70"
       >
         <Table>
           <TableHeader className="bg-muted/40">
@@ -552,32 +552,22 @@ export function Response({ children }) {
   const blocks = useMemo(() => parseRichContent(content), [content]);
 
   return (
-    <div className="max-w-none overflow-hidden rounded-[1.35rem] border border-border/70 bg-card/75 shadow-sm backdrop-blur-sm">
-      <div className="flex items-center justify-between border-b border-border/60 bg-linear-to-r from-primary/[0.08] via-transparent to-primary/[0.03] px-4 py-3">
-        <div>
-          <p className="text-sm font-semibold text-foreground">AI response</p>
-          <p className="text-xs text-muted-foreground">Formatted for reading, scanning, and copying</p>
-        </div>
-        <CopyButton value={content} label="Copy text" />
-      </div>
-
-      <div className="space-y-5 px-4 py-4">
-        {blocks.length > 0 ? (
-          blocks.map((block, index) =>
-            block.type === "code" ? (
-              <CodeBlock
-                key={`code-${index}`}
-                language={block.language}
-                code={block.code}
-              />
-            ) : (
-              renderTextBlock(block, index)
-            ),
-          )
-        ) : (
-          <p className="text-[15px] leading-7 text-foreground/95">{content}</p>
-        )}
-      </div>
+    <div className="max-w-none space-y-4 text-[15px] leading-7 text-foreground/95">
+      {blocks.length > 0 ? (
+        blocks.map((block, index) =>
+          block.type === "code" ? (
+            <CodeBlock
+              key={`code-${index}`}
+              language={block.language}
+              code={block.code}
+            />
+          ) : (
+            renderTextBlock(block, index)
+          ),
+        )
+      ) : (
+        <p className="text-[15px] leading-7 text-foreground/95">{content}</p>
+      )}
     </div>
   );
 }

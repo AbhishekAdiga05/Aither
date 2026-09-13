@@ -16,7 +16,7 @@ const ChatMessageView = ({user}) => {
   };
 
   return (
-    <div className='flex flex-col items-center justify-start h-full py-12 gap-y-16 overflow-y-auto scrollbar-hide'>
+    <div className="flex h-full flex-col items-center justify-start overflow-y-auto scrollbar-hide py-8 gap-y-8 sm:py-12 sm:gap-y-16">
         <div className="w-full flex flex-col items-center">
           <ChatWelcomeTabs
             userName={user?.name}

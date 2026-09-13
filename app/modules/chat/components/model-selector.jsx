@@ -87,7 +87,7 @@ export function ModelSelector({
             <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-3xl p-0" align="start">
+        <PopoverContent className="w-[calc(100vw-2rem)] max-w-md p-0 sm:w-3xl sm:max-w-none" align="start">
           <div className="p-3 border-b">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -205,7 +205,7 @@ export function ModelSelector({
                   <h3 className="text-sm font-semibold mb-3">
                     Context & Capabilities
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground">
                         Context Length
@@ -251,7 +251,7 @@ export function ModelSelector({
                   <h3 className="text-sm font-semibold mb-3">
                     Supported Modalities
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <p className="text-xs text-muted-foreground">
                         Input Modalities
@@ -306,7 +306,7 @@ export function ModelSelector({
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       {Object.entries(selectedForDetails.pricing).map(
                         ([key, value]) => {
                           if (value === "0") return null;

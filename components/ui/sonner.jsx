@@ -1,5 +1,7 @@
 "use client"
 
+import * as React from "react"
+
 import {
   CircleCheckIcon,
   InfoIcon,
@@ -14,10 +16,13 @@ const Toaster = ({
   ...props
 }) => {
   const { theme = "system" } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => setMounted(true), [])
 
   return (
     <Sonner
-      theme={theme}
+      theme={mounted ? theme : "system"}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

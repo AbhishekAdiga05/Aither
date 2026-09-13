@@ -157,14 +157,20 @@ export const getAllChats = async () => {
       where: {
         userId: user.id,
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        model: true,
+        createdAt: true,
+        updatedAt: true,
         messages: {
-          take: 10,
-          orderBy: { createdAt: 'desc' }
+          take: 5,
+          select: { content: true },
+          orderBy: { createdAt: "desc" },
         },
       },
       orderBy: {
-        createdAt: "desc",
+        updatedAt: "desc",
       },
     });
 

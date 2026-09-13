@@ -40,7 +40,7 @@ function SidebarSkeletons() {
   );
 }
 
-export function ChatSidebar({ user, chats: initialChats }) {
+export function ChatSidebar({ user, chats: initialChats, className, onNavigate }) {
   const { activeChatId, setActiveChatId } = useChatStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -86,7 +86,7 @@ export function ChatSidebar({ user, chats: initialChats }) {
     };
 
     filteredChats.forEach((chat) => {
-      const chatDate = new Date(chat.createdAt);
+      const chatDate = new Date(chat.updatedAt ?? chat.createdAt);
       if (chatDate >= today) groups.today.push(chat);
       else if (chatDate >= yesterday) groups.yesterday.push(chat);
       else if (chatDate >= lastWeek) groups.lastWeek.push(chat);
@@ -115,19 +115,25 @@ export function ChatSidebar({ user, chats: initialChats }) {
           <Link
             key={chat.id}
             href={`/chat/${chat.id}`}
-            onClick={() => setActiveChatId(chat.id)}
+            onClick={() => {
+              setActiveChatId(chat.id);
+              onNavigate?.();
+            }}
             className={cn(
-              "group flex items-center justify-between rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors duration-150",
-              chat.id === activeChatId && "bg-sidebar-accent font-medium",
+              "group flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
+              chat.id === activeChatId
+                ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
             )}
+            aria-current={chat.id === activeChatId ? "true" : undefined}
           >
-            <span className="truncate flex-1 min-w-0">{chat.title}</span>
+            <span className="flex-1 min-w-0 truncate">{chat.title}</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-sidebar-accent-foreground/10 transition-opacity"
+                  size="icon-sm"
+                  className="h-6 w-6 shrink-0 rounded-md opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                   onClick={(e) => e.preventDefault()}
                 >
                   <EllipsisIcon className="h-3.5 w-3.5" />
@@ -153,17 +159,34 @@ export function ChatSidebar({ user, chats: initialChats }) {
     );
   };
 
-  return (
-    <div className="flex h-full w-64 shrink-0 flex-col border-r border-border/50 bg-sidebar/60 backdrop-blur-xl z-20 relative">
+return (
+    <div
+      className={cn(
+        "flex h-full shrink-0 flex-col border-r border-border bg-sidebar",
+        className,
+      )}
+    >
       {/* Logo */}
-      <div className="flex items-center border-b border-sidebar-border px-4 py-3 h-14">
+      <div className="relative flex items-center justify-center border-b border-sidebar-border px-3 py-2 h-14">
         <Image
-          src="/logo.svg"
-          alt="Neon Chat logo"
-          width={400}
-          height={100}
-          className="w-full h-auto object-contain"
+          src="/logoText.png"
+          alt="App logo"
+          width={200}
+          height={63}
+          unoptimized
+          className="h-full w-auto max-w-full object-contain invert transition dark:invert-0"
         />
+        {onNavigate && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onNavigate}
+            aria-label="Close sidebar"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <XIcon className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {/* New Chat */}
@@ -172,11 +195,12 @@ export function ChatSidebar({ user, chats: initialChats }) {
           href="/"
           onClick={() => {
             setActiveChatId(null);
+            onNavigate?.();
           }}
         >
           <Button
             variant="outline"
-            className="w-full justify-start gap-2 text-sm h-10 rounded-xl transition-all duration-300 hover:border-primary/50 hover:bg-primary/5 hover:text-primary hover:shadow-[0_0_15px_rgba(0,240,255,0.1)] active:scale-95"
+            className="w-full justify-start gap-2 text-sm h-10 rounded-md bg-background transition-colors hover:bg-accent hover:text-accent-foreground"
           >
             <PlusIcon className="h-4 w-4" />
             New Chat
@@ -190,7 +214,7 @@ export function ChatSidebar({ user, chats: initialChats }) {
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60 group-focus-within/search:text-primary transition-colors pointer-events-none" />
           <Input
             placeholder="Search chats..."
-            className="pl-10 pr-9 h-10 text-sm bg-sidebar-accent/30 border-sidebar-border/50 rounded-xl focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:border-primary/50 transition-all"
+            className="pl-10 pr-9 h-10 text-sm bg-sidebar-accent/40 border-sidebar-border rounded-md focus-visible:ring-1 focus-visible:ring-foreground/20 focus-visible:border-foreground/30"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
