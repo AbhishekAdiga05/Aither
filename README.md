@@ -253,7 +253,7 @@ This is the part most AI chat demos skip — here's exactly what Aither enforces
 
 ### Netlify
 
-- Build command: `node scripts/check-env.mjs && npx prisma db push --skip-generate && npx prisma generate && next build` (fail fast on missing env vars, applies schema changes to the production DB on every deploy)
+- Build command: `node scripts/check-env.mjs && npx prisma db push && npx prisma generate && next build` (fail fast on missing env vars, applies schema changes to the production DB on every deploy)
 - Publish directory: `.next`
 
 ### Post-deploy checklist
