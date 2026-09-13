@@ -3,7 +3,7 @@ CREATE TABLE "rateLimit" (
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
     "count" INTEGER NOT NULL DEFAULT 0,
-    "lastRequest" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "lastRequest" BIGINT NOT NULL DEFAULT 0,
 
     CONSTRAINT "rateLimit_pkey" PRIMARY KEY ("id")
 );

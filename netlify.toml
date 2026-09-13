@@ -1,5 +1,5 @@
 [build]
-  command = "node scripts/check-env.mjs && npx prisma db push && npx prisma generate && next build"
+  command = "node scripts/check-env.mjs && npx prisma db push --accept-data-loss && npx prisma generate && next build"
   publish = ".next"
 
 [build.environment]
