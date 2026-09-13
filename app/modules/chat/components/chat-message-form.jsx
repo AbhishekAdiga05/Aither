@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TextareaAutosize from "react-textarea-autosize";
@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { useAIModels } from "@/app/modules/ai-agent/hook/ai-agent";
 import { ModelSelector } from "./model-selector";
 import { Spinner } from "@/components/ui/spinner";
-import { toast } from "sonner";
 import { useCreateChat } from "../hooks/chat";
 
 export default function ChatMessageForm({ initialMessage, onMessageChange }) {
@@ -21,51 +20,53 @@ export default function ChatMessageForm({ initialMessage, onMessageChange }) {
 
   const selectedModel = selectedModelOverride ?? models?.models?.[0]?.id ?? null;
 
+  // Sync suggestion message from parent using render-time derived state.
+  // Empty → empty transitions are ignored so clearing the parent's selection
+  // never wipes what the user already has in the box.
   const [prevInitialMessage, setPrevInitialMessage] = useState(initialMessage);
-
-  // Sync initial message from parent during render to avoid useEffect cascading renders
   if (initialMessage !== prevInitialMessage) {
-    setMessage(initialMessage);
     setPrevInitialMessage(initialMessage);
-    // Use an effect for the callback to ensure it happens after render
-  }
-
-  useEffect(() => {
-    if (initialMessage && initialMessage === message) {
-      onMessageChange?.("");
+    if (initialMessage) {
+      setMessage(initialMessage);
     }
-  }, [initialMessage, message, onMessageChange]);
+  }
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
     if (!message.trim()) return;
 
+    const content = message.trim();
+    setMessage("");
     try {
-      await mutateAsync({ content: message, model: selectedModel });
-      toast.success("Message sent successfully");
-      setMessage("");
+      await mutateAsync({ content, model: selectedModel });
+      onMessageChange?.("");
     } catch (error) {
-      console.error("Error sending message:", error);
-      toast.error("Failed to send message");
+      console.error("Error creating chat:", error);
+      setMessage(content);
     }
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 pb-8">
-      <form onSubmit={handleSubmit} className="relative group/form">
-        {/* Main Input Container - Floating Glassmorphism */}
-        <div className={cn(
-          "relative rounded-3xl border border-border/50 bg-card/60 backdrop-blur-2xl shadow-2xl transition-all duration-500",
-          "focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/50 focus-within:shadow-[0_0_30px_rgba(0,240,255,0.15)]",
-          "hover:border-border group-hover/form:shadow-xl"
-        )}>
-          {/* Textarea */}
+    <div className="w-full pb-4">
+      <form
+        onSubmit={handleSubmit}
+        className="relative group/form"
+        aria-label="Start a new chat"
+      >
+        <div
+          className={cn(
+            "relative rounded-2xl border border-border bg-card shadow-sm transition-colors",
+            "focus-within:border-foreground/30 focus-within:ring-2 focus-within:ring-foreground/5",
+            "hover:border-border",
+          )}
+        >
           <TextareaAutosize
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type your message here..."
+            placeholder="Ask anything, start with your first prompt..."
             maxRows={6}
-            className="w-full resize-none border-0 bg-transparent px-6 py-5 text-base outline-none focus:ring-0 placeholder:text-muted-foreground/60 leading-relaxed"
+            aria-label="Your message"
+            className="w-full resize-none border-0 bg-transparent px-5 pt-4 pb-2 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/50"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -74,10 +75,8 @@ export default function ChatMessageForm({ initialMessage, onMessageChange }) {
             }}
           />
 
-          {/* Toolbar */}
-          <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-border/30">
-            {/* Left side tools */}
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+            <div className="flex items-center gap-1.5">
               {isPending ? (
                 <Spinner className="h-4 w-4" />
               ) : (
@@ -85,32 +84,32 @@ export default function ChatMessageForm({ initialMessage, onMessageChange }) {
                   models={models?.models}
                   selectedModelId={selectedModel}
                   onModelSelect={setSelectedModelOverride}
-                  className="bg-transparent hover:bg-primary/5 border-none h-10 px-3 rounded-xl transition-all"
+                  className="h-9 rounded-xl border-none bg-transparent px-2.5 text-xs hover:bg-accent/70"
                 />
               )}
             </div>
 
-            {/* Submit Button */}
             <Button
               type="submit"
               disabled={!message.trim() || isChatPending}
+              aria-label="Send message"
               className={cn(
-                "h-12 w-12 p-0 rounded-2xl transition-all duration-300 active:scale-90",
-                message.trim() 
-                  ? "bg-primary text-primary-foreground shadow-[0_4px_15px_rgba(0,240,255,0.3)] hover:shadow-[0_4px_25px_rgba(0,240,255,0.5)] hover:scale-105" 
-                  : "bg-muted text-muted-foreground opacity-50"
+                "h-10 w-10 shrink-0 rounded-md p-0 transition-colors",
+                message.trim() && !isChatPending
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "bg-muted text-muted-foreground",
               )}
             >
               {isChatPending ? (
-                <Spinner className="h-5 w-5" />
+                <Spinner className="h-4 w-4" />
               ) : (
-                <Send className="h-5 w-5" />
+                <Send className="h-4 w-4" />
               )}
             </Button>
           </div>
         </div>
       </form>
-      <p className="mt-3 text-center text-[10px] text-muted-foreground/50 font-medium uppercase tracking-[0.2em]">
+      <p className="mt-2 text-center text-[10px] font-medium tracking-[0.18em] text-muted-foreground/40 uppercase">
         Neon Chat can make mistakes. Check important info.
       </p>
     </div>

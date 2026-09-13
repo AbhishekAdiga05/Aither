@@ -1,0 +1,508 @@
+(node:12808) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/abhis/OneDrive/Desktop/Next.Js/Major%20Projects/Project-2/t3-chat/next.config.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[2m2026-09-13T11:11:29.254Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:29.652Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297889640,
+                 ~~~~~~~~~~~~~
+    id: "H99XmJKtTN4sKV8UPRO2IJycFEV3nU9y"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:29.951Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:30.286Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297890284,
+                 ~~~~~~~~~~~~~
+    id: "1UQ9JMhf7QMCUFPLItJRmYwczN8Oi8bo"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:30.561Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:30.905Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297890898,
+                 ~~~~~~~~~~~~~
+    id: "0waWjgwTRl1ABCVpC7l498Hm6dhDVRVx"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:31.180Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:31.514Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297891513,
+                 ~~~~~~~~~~~~~
+    id: "h3UM183PWvctdr3THk9QuDZMm11HuyaY"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:31.802Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:32.071Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297892059,
+                 ~~~~~~~~~~~~~
+    id: "vBQLkzL8etimIWeziBWovczFRjCFO4Nt"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:32.359Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:32.636Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297892631,
+                 ~~~~~~~~~~~~~
+    id: "MSlqj4yBFkUQOXHiBpDcUoa9yRQv2Qw8"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:32.913Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:33.184Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297893178,
+                 ~~~~~~~~~~~~~
+    id: "0jiXsViECNLXP65Mz9ZiOWBbFdzBYIwE"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:33.481Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:33.764Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297893754,
+                 ~~~~~~~~~~~~~
+    id: "SJose5qpWrWpJt6SCizVfXzgi2yBGZMo"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:34.043Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:34.320Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297894318,
+                 ~~~~~~~~~~~~~
+    id: "yEAc893vXWcRGBDD2iYwU8fcZjv8mKUD"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:34.605Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:34.872Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297894871,
+                 ~~~~~~~~~~~~~
+    id: "IdZ63mSueY94AamuMA4X3bfMTgrfRIr7"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:35.154Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:35.420Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297895414,
+                 ~~~~~~~~~~~~~
+    id: "NLC346LN9ZsrlZgzCBND941q07sa0TcO"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:35.704Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:35.980Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297895969,
+                 ~~~~~~~~~~~~~
+    id: "OdpfYV9fpb12qOdgd8uTvVbp9RwPiQYh"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:36.281Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:36.571Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297896565,
+                 ~~~~~~~~~~~~~
+    id: "yRSSFWJAdaFCyEtPIvGc4aiEObfvm2hC"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:36.856Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:37.151Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297897141,
+                 ~~~~~~~~~~~~~
+    id: "ZDbSYapgsIFIm1jNvwg6XWYP4tMW5o6I"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:37.434Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:37.708Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297897701,
+                 ~~~~~~~~~~~~~
+    id: "VKm0kdet3aAV8bu8O8PAAHXZ3g5YJALi"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:38.011Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:38.283Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297898282,
+                 ~~~~~~~~~~~~~
+    id: "s1DlpOzOMO9j0AQh7OIqVyuEMqCZfZhV"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:38.570Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:38.849Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297898839,
+                 ~~~~~~~~~~~~~
+    id: "mSNYuLgM1KXJZtyVfNWsXUhiOo3mwiwS"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:39.136Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:39.397Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297899390,
+                 ~~~~~~~~~~~~~
+    id: "NQiw7xS9Anng40lK2GJteIAA2Tw5zWpT"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:39.683Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:39.949Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297899943,
+                 ~~~~~~~~~~~~~
+    id: "xXiAfRxoSRsANkilQOfZyeSl1RihpY8D"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:40.232Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:40.494Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297900489,
+                 ~~~~~~~~~~~~~
+    id: "Qmo3fC8uirmt9UIcpf4PiPc0Y54PHKOC"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:40.771Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:41.046Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297901045,
+                 ~~~~~~~~~~~~~
+    id: "ofBy1Z92RBRvVayOfK3DCVyGXtnwRhoP"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:41.328Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:41.612Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297901602,
+                 ~~~~~~~~~~~~~
+    id: "78IoFORkNX1OoWBfyt7RfBDSLZqcGNOB"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:41.891Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:42.180Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297902174,
+                 ~~~~~~~~~~~~~
+    id: "LPVSvLi262yu9v4WoctjJ0sO7gNRCz2h"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}
+[2m2026-09-13T11:11:42.473Z[0m [31mERROR[0m [1m[Better Auth]:[0m Invalid callbackURL: http://localhost:3101
+[2m2026-09-13T11:11:42.730Z[0m [31mERROR[0m [1m[Better Auth]:[0m Error setting rate limit Error [PrismaClientValidationError]: 
+Invalid `prisma.rateLimit.create()` invocation:
+
+{
+  data: {
+    key: "0000:0000:0000:0000:0000:0000:0000:0000|/sign-in/social",
+    count: 1,
+    lastRequest: 1789297902724,
+                 ~~~~~~~~~~~~~
+    id: "zmMH9M2FwZN1hJ1RW78NxtFL0hHa7O85"
+  },
+  select: undefined
+}
+
+Argument `lastRequest`: Invalid value provided. Expected DateTime, provided Int.
+    at async Object.create (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:434:10913)
+    at async Object.set (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:3453)
+    at async W (C:\Users\abhis\OneDrive\Desktop\Next.Js\Major Projects\Project-2\t3-chat\.next\server\chunks\_a95dfff5._.js:69:5527) {
+  clientVersion: '7.4.2'
+}

@@ -1,40 +1,15 @@
 import { NextResponse } from "next/server";
 import { FALLBACK_MODELS } from "@/lib/ai-models";
+import { getFreeModels } from "@/lib/free-models.mjs";
 
-export async function GET(req) {
+export async function GET(_req) {
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/models", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      next: { revalidate: 3600 },
-    });
+    const models = await getFreeModels();
 
-    if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    const freeModels = data.data.filter((model) => {
-      const promptPrice = parseFloat(model.pricing?.prompt || "0");
-      const completionPrice = parseFloat(model.pricing?.completion || "0");
-      return promptPrice === 0 && completionPrice === 0;
-    });
-
-    const formattedModels = freeModels.map((model) => ({
-      id: model.id,
-      name: model.name,
-      description: model.description,
-      context_length: model.context_length,
-      architecture: model.architecture,
-      pricing: model.pricing,
-      top_provider: model.top_provider,
-    }));
-
-    return NextResponse.json({ models: formattedModels });
+    return NextResponse.json(
+      { models },
+      { headers: { "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400" } },
+    );
   } catch (error) {
     console.error("Error fetching free models:", error);
 
@@ -44,7 +19,10 @@ export async function GET(req) {
         fallback: true,
         error: error.message || "Failed to fetch free models",
       },
-      { status: 200 },
+      {
+        status: 200,
+        headers: { "Cache-Control": "no-store" },
+      },
     );
   }
 }

@@ -5,15 +5,20 @@ import { Sunrise, Sunset } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export function ModeToggle() {
   const { setTheme, theme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" aria-label="Toggle theme" disabled>
+        <Sunrise className="size-5" />
+      </Button>
+    );
+  }
 
   return (
     <Button
@@ -24,7 +29,7 @@ export function ModeToggle() {
       {theme === "light" ? (
         <Sunset className="size-5" />
       ) : (
-        <Sunrise size={"size-5"} />
+        <Sunrise className="size-5" />
       )}
     </Button>
   );

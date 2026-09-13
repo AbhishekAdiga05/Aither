@@ -1,9 +1,9 @@
 import { Response } from "@/components/ai-elements/response";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns/format";
-import { MessageSquareIcon, PaperclipIcon } from "lucide-react";
+import { Bot, PaperclipIcon } from "lucide-react";
 import React from "react";
+import { CopyButton } from "./message-actions";
 
 const AttachmentList = ({ attachments = [] }) => {
   if (attachments.length === 0) {
@@ -32,44 +32,48 @@ const AttachmentList = ({ attachments = [] }) => {
 
 const UserMessage = ({ content, attachments }) => {
   return (
-    <div className="flex justify-end pb-4 pr-2 pl-10">
-      <Card
-        className={
-          "rounded-lg bg-muted p-2 shadow-none border-none max-w-[80%] wrap-break-word"
-        }
-      >
-        <div className="flex flex-col gap-2">
-          {content ? <div>{content}</div> : null}
-          <AttachmentList attachments={attachments} />
+    <div className="mb-5 flex justify-end pl-10">
+      <div className="flex max-w-[85%] flex-col items-end gap-1">
+        <div className="rounded-2xl rounded-tr-sm bg-primary px-4 py-2.5 text-[15px] leading-7 text-primary-foreground shadow-sm">
+          {content}
         </div>
-      </Card>
+        <AttachmentList attachments={attachments} />
+      </div>
     </div>
   );
 };
 
 const AssistantMessage = ({ content, createdAt, type }) => {
   const formattedDate = createdAt
-    ? format(new Date(createdAt), "HH:mm 'on' MMM dd, yyyy")
+    ? format(new Date(createdAt), "MMM dd, yyyy - HH:mm")
     : null;
 
   return (
     <div
       className={cn(
-        "flex flex-col group px-2 pb-4",
-        type === "ERROR" && "text-red-700 dark:text-red-500",
+        "group mb-5 flex gap-3",
+        type === "ERROR" && "text-red-600 dark:text-red-400",
       )}
     >
-      <div className="flex items-center gap-2 pl-2 mb-2">
-        <MessageSquareIcon className="h-4 w-4" />
-        {formattedDate && (
-          <span className="text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-            {formattedDate}
-          </span>
-        )}
+      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-card/80 text-primary shadow-sm">
+        <Bot className="h-4 w-4" />
       </div>
 
-      <div className="pl-8.5 flex flex-col gap-y-4">
-        <Response>{content}</Response>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 py-0.5">
+          <span className="text-sm font-semibold text-foreground">NeonChat</span>
+          {formattedDate && (
+            <span className="text-xs text-muted-foreground/60">{formattedDate}</span>
+          )}
+        </div>
+
+        <div className="mt-2 text-foreground/95">
+          <Response>{content}</Response>
+        </div>
+
+        <div className="mt-2 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-focus-within:opacity-100 group-hover:opacity-100">
+          <CopyButton value={typeof content === "string" ? content : ""} />
+        </div>
       </div>
     </div>
   );
@@ -82,11 +86,7 @@ const MessageCard = ({ content, type, role, createdAt, attachments = [] }) => {
     );
   }
 
-  return (
-    <div className="mt-5">
-      <UserMessage content={content} attachments={attachments} />
-    </div>
-  );
+  return <UserMessage content={content} attachments={attachments} />;
 };
 
 export default MessageCard;

@@ -169,13 +169,15 @@ export const useGetChatById = (chatId) => {
 export const useDeleteChat = (chatId) => {
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { setChats, chats, clearMessages, activeChatId, setActiveChatId } =
-    useChatStore();
+  const { clearMessages, activeChatId, setActiveChatId } = useChatStore();
   return useMutation({
     mutationFn: () => deleteChat(chatId),
     onSuccess: () => {
-      // Remove from Zustand store immediately
-      setChats(chats.filter((c) => c.id !== chatId));
+      // Remove from Zustand store immediately (read fresh state to avoid stale closures)
+      const currentChats = useChatStore.getState().chats;
+      useChatStore.getState().setChats(
+        currentChats.filter((c) => c.id !== chatId),
+      );
       if (activeChatId === chatId) {
         clearMessages();
         setActiveChatId(null);

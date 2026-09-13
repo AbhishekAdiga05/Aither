@@ -115,3 +115,13 @@ model Message {
   @@index([chatId, createdAt])
   @@map("message")
 }
+
+// better-auth built-in rate limiting (database storage).
+model rateLimit {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  count       Int      @default(0)
+  lastRequest DateTime @default(now())
+
+  @@map("rateLimit")
+}
