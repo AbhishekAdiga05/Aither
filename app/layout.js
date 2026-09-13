@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/ui/providers/theme-provider";
 import { QueryProvider } from "@/components/ui/providers/query-provider";
 
 export const metadata = {
-  title: "Neon Chat",
+  title: "AI Chat",
   description: "AI-powered chat application",
 };
 

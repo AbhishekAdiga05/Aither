@@ -40,7 +40,7 @@ function SidebarSkeletons() {
   );
 }
 
-export function ChatSidebar({ user, chats: initialChats }) {
+export function ChatSidebar({ user, chats: initialChats, className, onNavigate }) {
   const { activeChatId, setActiveChatId } = useChatStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -115,7 +115,10 @@ export function ChatSidebar({ user, chats: initialChats }) {
           <Link
             key={chat.id}
             href={`/chat/${chat.id}`}
-            onClick={() => setActiveChatId(chat.id)}
+            onClick={() => {
+              setActiveChatId(chat.id);
+              onNavigate?.();
+            }}
             className={cn(
               "group flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
               chat.id === activeChatId
@@ -130,7 +133,7 @@ export function ChatSidebar({ user, chats: initialChats }) {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="h-6 w-6 shrink-0 rounded-md opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                  className="h-6 w-6 shrink-0 rounded-md opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                   onClick={(e) => e.preventDefault()}
                 >
                   <EllipsisIcon className="h-3.5 w-3.5" />
@@ -156,18 +159,34 @@ export function ChatSidebar({ user, chats: initialChats }) {
     );
   };
 
-  return (
-    <div className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar z-20 relative">
+return (
+    <div
+      className={cn(
+        "flex h-full shrink-0 flex-col border-r border-border bg-sidebar",
+        className,
+      )}
+    >
       {/* Logo */}
-<div className="flex items-center justify-center border-b border-sidebar-border px-3 py-2 h-14">
+      <div className="relative flex items-center justify-center border-b border-sidebar-border px-3 py-2 h-14">
         <Image
           src="/logoText.png"
-          alt="Neon Chat logo"
+          alt="App logo"
           width={200}
           height={63}
           unoptimized
           className="h-full w-auto max-w-full object-contain invert transition dark:invert-0"
         />
+        {onNavigate && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onNavigate}
+            aria-label="Close sidebar"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <XIcon className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {/* New Chat */}
@@ -176,6 +195,7 @@ export function ChatSidebar({ user, chats: initialChats }) {
           href="/"
           onClick={() => {
             setActiveChatId(null);
+            onNavigate?.();
           }}
         >
           <Button

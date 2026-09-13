@@ -47,7 +47,7 @@ export default function ChatMessageForm({ initialMessage, onMessageChange }) {
   };
 
   return (
-    <div className="w-full pb-4">
+    <div className="w-full pb-[calc(env(safe-area-inset-bottom)+1rem)]">
       <form
         onSubmit={handleSubmit}
         className="relative group/form"
@@ -110,7 +110,7 @@ export default function ChatMessageForm({ initialMessage, onMessageChange }) {
         </div>
       </form>
       <p className="mt-2 text-center text-[10px] font-medium tracking-[0.18em] text-muted-foreground/40 uppercase">
-        Neon Chat can make mistakes. Check important info.
+        AI can make mistakes. Check important info.
       </p>
     </div>
   );

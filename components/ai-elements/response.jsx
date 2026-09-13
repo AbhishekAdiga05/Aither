@@ -310,7 +310,7 @@ function CodeBlock({ language, code }) {
         <CopyButton
           value={code}
           label="Copy code"
-          className="text-zinc-100 opacity-0 transition group-hover/code:opacity-100 hover:bg-white/10 hover:text-white focus-visible:opacity-100"
+          className="text-zinc-100 opacity-100 sm:opacity-0 sm:transition sm:group-hover/code:opacity-100 hover:bg-white/10 hover:text-white focus-visible:opacity-100"
         />
       </div>
       <pre className="overflow-x-auto px-4 py-4 text-sm leading-7 text-zinc-100">
@@ -376,7 +376,7 @@ function renderTextBlock(block, index) {
     return (
       <div
         key={`table-${index}`}
-        className="overflow-hidden rounded-2xl border border-border/70 bg-background/70"
+        className="overflow-x-auto rounded-2xl border border-border/70 bg-background/70"
       >
         <Table>
           <TableHeader className="bg-muted/40">

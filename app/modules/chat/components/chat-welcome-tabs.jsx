@@ -58,7 +58,7 @@ function ChatWelcomeTabs({ userName, onMessageSelect }) {
     <div className="flex flex-col items-center justify-center px-4 w-full min-h-0 animate-in fade-in slide-in-from-bottom-8 duration-700">
       <div className="w-full max-w-3xl space-y-8">
         <div className="space-y-2 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground">
             How can I help you,
             <br />
             {firstName}?
@@ -76,7 +76,7 @@ function ChatWelcomeTabs({ userName, onMessageSelect }) {
               aria-pressed={activeTab === index}
               onClick={() => setActiveTab(index)}
               className={cn(
-                "flex items-center justify-center gap-2 flex-1 min-w-[110px] rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center justify-center gap-2 flex-1 min-w-[calc(50%-0.25rem)] sm:min-w-[110px] rounded-md px-2 sm:px-4 py-2.5 text-sm font-medium transition-colors",
                 activeTab === index
                   ? "bg-primary text-primary-foreground"
                   : "border border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground",

@@ -5,7 +5,7 @@ const Page = async ({ params }) => {
   const { chatId } = await params;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)]">
+    <div className="flex h-full flex-col">
       <MessageViewWithForm key={chatId} chatId={chatId} />
     </div>
   );

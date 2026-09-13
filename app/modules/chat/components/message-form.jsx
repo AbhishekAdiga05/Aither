@@ -50,7 +50,7 @@ export default function MessageForm({
   }, [models, selectedModel]);
 
   return (
-    <div className="w-full pb-4">
+    <div className="w-full pb-[calc(env(safe-area-inset-bottom)+1rem)]">
       <form
         onSubmit={onFormSubmit}
         className="relative group/form"
@@ -110,7 +110,7 @@ export default function MessageForm({
                 )}
               >
                 <Globe className={cn("h-4 w-4", useWebSearch && "animate-pulse")} />
-                Search
+                <span className="hidden sm:inline">Search</span>
               </Button>
             </div>
 
@@ -154,7 +154,7 @@ export default function MessageForm({
         </div>
       </form>
       <p className="mt-2 text-center text-[10px] font-medium tracking-[0.18em] text-muted-foreground/40 uppercase">
-        Neon Chat can make mistakes. Check important info.
+        AI can make mistakes. Check important info.
       </p>
     </div>
   );

@@ -32,7 +32,7 @@ const AttachmentList = ({ attachments = [] }) => {
 
 const UserMessage = ({ content, attachments }) => {
   return (
-    <div className="mb-5 flex justify-end pl-10">
+    <div className="mb-5 flex justify-end pl-0 sm:pl-10">
       <div className="flex max-w-[85%] flex-col items-end gap-1">
         <div className="rounded-2xl rounded-tr-sm bg-primary px-4 py-2.5 text-[15px] leading-7 text-primary-foreground shadow-sm">
           {content}
@@ -61,7 +61,7 @@ const AssistantMessage = ({ content, createdAt, type }) => {
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 py-0.5">
-          <span className="text-sm font-semibold text-foreground">NeonChat</span>
+          <span className="text-sm font-semibold text-foreground">Assistant</span>
           {formattedDate && (
             <span className="text-xs text-muted-foreground/60">{formattedDate}</span>
           )}
@@ -71,7 +71,7 @@ const AssistantMessage = ({ content, createdAt, type }) => {
           <Response>{content}</Response>
         </div>
 
-        <div className="mt-2 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-focus-within:opacity-100 group-hover:opacity-100">
+        <div className="mt-2 flex items-center gap-1 opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
           <CopyButton value={typeof content === "string" ? content : ""} />
         </div>
       </div>

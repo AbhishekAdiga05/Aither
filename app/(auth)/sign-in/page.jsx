@@ -69,13 +69,13 @@ const LoginPage = () => {
   };
 
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4">
+    <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4 py-10 pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
       <div className="w-full max-w-md animate-in fade-in zoom-in duration-700">
-        <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
+        <div className="flex flex-col items-center rounded-2xl border border-border bg-card p-6 text-center shadow-sm sm:p-10">
           <div className="mb-8 rounded-2xl bg-muted/60 p-4">
             <Image
               src="/logo.png"
-              alt="Neon Chat logo"
+              alt="App logo"
               width={100}
               height={35}
               priority

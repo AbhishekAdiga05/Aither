@@ -221,7 +221,7 @@ const MessageViewWithForm = ({ chatId }) => {
       </div>
 
       {/* Floating Message Form */}
-      <div className="relative z-10">
+      <div className="relative z-10 pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto w-full max-w-3xl">
           <MessageForm
             model={chatModel}
