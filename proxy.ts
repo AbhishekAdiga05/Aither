@@ -29,15 +29,26 @@ export function proxy(request) {
     return NextResponse.redirect(url);
   }
 
-  // Nonce for Next's inline scripts/styles (CSP) + hardening headers.
+  // Nonce + hardening headers.
   const nonce = crypto.randomUUID();
-  const response = NextResponse.next({ request: { headers: request.headers } });
-  response.headers.set("x-nonce", nonce);
-
   const csp = nonceSource(nonce);
+
+  // Next.js 16 derives the nonce for its inline scripts/styles from the
+  // Content-Security-Policy header it receives on THIS request, so the CSP
+  // must be forwarded through the render request — not just echoed on the
+  // response. Without this, hydration scripts lack the nonce attribute and
+  // get blocked by the browser CSP (making every page non-interactive).
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  if (csp) {
+    requestHeaders.set("content-security-policy", csp);
+  }
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
   if (csp) {
     response.headers.set("Content-Security-Policy", csp);
   }
+  response.headers.set("x-nonce", nonce);
 
   response.headers.set("referrer-policy", "strict-origin-when-cross-origin");
   response.headers.set("x-content-type-options", "nosniff");

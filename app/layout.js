@@ -1,4 +1,5 @@
 import "./globals.css";
+import { headers } from "next/headers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/ui/providers/theme-provider";
@@ -9,7 +10,10 @@ export const metadata = {
   description: "AI-powered chat application",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const headersList = await headers();
+  const nonce = headersList.get("x-nonce") ?? undefined;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased min-h-screen">
@@ -20,6 +24,7 @@ export default function RootLayout({ children }) {
               defaultTheme="system"
               enableSystem
               disableTransitionOnChange
+              nonce={nonce}
             >
               {children}
             </ThemeProvider>
