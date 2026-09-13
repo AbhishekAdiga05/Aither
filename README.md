@@ -248,12 +248,12 @@ This is the part most AI chat demos skip — here's exactly what Aither enforces
 
 1. Push the repo to GitHub and import it on Vercel.
 2. Add every variable from [Environment Variables](#environment-variables), pointing `BETTER_AUTH_URL` / `NEXT_PUBLIC_APP_URL` at your Vercel domain.
-3. Use build command `npx prisma generate && next build`.
+3. Use build command `npx prisma generate && next build`. Optionally run `node scripts/check-env.mjs` before it to fail fast on missing required env vars: `node scripts/check-env.mjs && npx prisma generate && next build`.
 4. Migrate your production database once (`npx prisma db push`), then deploy.
 
 ### Netlify
 
-- Build command: `npx prisma db push --skip-generate && npx prisma generate && next build` (applies schema changes to the production DB on every deploy)
+- Build command: `node scripts/check-env.mjs && npx prisma db push --skip-generate && npx prisma generate && next build` (fail fast on missing env vars, applies schema changes to the production DB on every deploy)
 - Publish directory: `.next`
 
 ### Post-deploy checklist
