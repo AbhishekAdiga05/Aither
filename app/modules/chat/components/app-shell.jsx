@@ -35,7 +35,7 @@ export function AppShell({ user, chats, children }) {
 
       <main className="flex flex-1 flex-col min-w-0">
         {/* Mobile top bar */}
-        <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-background/70 px-2 backdrop-blur-md md:hidden">
+        <div className="flex min-h-14 shrink-0 items-center justify-between gap-2 border-b border-border/50 bg-background/70 px-2 pb-2 pt-[calc(env(safe-area-inset-top)+0.5rem)] backdrop-blur-md md:hidden">
           <Button
             variant="ghost"
             size="icon"
@@ -52,7 +52,7 @@ export function AppShell({ user, chats, children }) {
             width={160}
             height={50}
             unoptimized
-            className="h-7 w-auto object-contain invert dark:invert-0"
+            className="h-6 w-auto object-contain invert dark:invert-0 sm:h-7"
           />
 
           <ModeToggle />
@@ -74,7 +74,7 @@ export function AppShell({ user, chats, children }) {
             user={user}
             chats={chats}
             onNavigate={() => setSidebarOpen(false)}
-            className="absolute inset-y-0 left-0 flex w-80 max-w-[85vw] shadow-2xl"
+            className="absolute inset-y-0 left-0 flex w-80 max-w-[85vw] shadow-2xl pt-[env(safe-area-inset-top)]"
           />
         </div>
       )}

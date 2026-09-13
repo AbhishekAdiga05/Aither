@@ -20,7 +20,7 @@ const REQUIRED = [
 const ALTERNATIVES = [
   {
     names: ["BETTER_AUTH_URL", "NEXT_PUBLIC_APP_URL"],
-    hint: "Your public production origin (e.g. https://your-site.netlify.app).",
+    hint: "Optional in local dev (sign-in auto-detects the origin). Set it in production to your public origin, e.g. https://your-site.netlify.app, so OAuth callback URLs are stable.",
   },
 ];
 
