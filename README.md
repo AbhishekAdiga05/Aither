@@ -253,7 +253,7 @@ This is the part most AI chat demos skip — here's exactly what Aither enforces
 
 ### Netlify
 
-- Build command: `npx prisma generate && next build`
+- Build command: `npx prisma db push --skip-generate && npx prisma generate && next build` (applies schema changes to the production DB on every deploy)
 - Publish directory: `.next`
 
 ### Post-deploy checklist
