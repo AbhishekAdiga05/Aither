@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { filesToFileUIParts } from "../lib/attachments";
 
 const getMessageParts = (content) => {
   try {
@@ -24,6 +25,63 @@ const getMessageParts = (content) => {
 
   return [{ type: "text", text: content }];
 };
+
+/**
+ * Extract a user-friendly error message from an AI SDK / fetch error.
+ * The error can be a Error, a Response, or a nested object from the SDK.
+ */
+function extractErrorMessage(err) {
+  if (!err) return "Something went wrong. Please try again.";
+
+  // If it's a Response object (from fetch), try to parse the JSON body
+  if (err instanceof Response) {
+    return "Failed to generate AI response. Please try again.";
+  }
+
+  // Try multiple paths where the message might live
+  const raw =
+    err.message ??
+    err.error?.message ??
+    err.cause?.message ??
+    err.body?.error ??
+    "";
+
+  if (!raw) return "Something went wrong. Please try again.";
+
+  // If the raw message is JSON, try to parse it for a nested error
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed.error) return parsed.error;
+    if (parsed.message) return parsed.message;
+  } catch {
+    // Not JSON — use as-is.
+  }
+
+  // Don't leak internal details — map common technical messages to friendly text
+  if (/fetch failed|network|ECONNREFUSED|ENOTFOUND/i.test(raw)) {
+    return "Could not reach the AI provider. Check your connection and try again.";
+  }
+  if (/timeout|abort/i.test(raw)) {
+    return "The request timed out. Please try again.";
+  }
+  if (/401|unauthorized/i.test(raw)) {
+    return "Authentication error. Please refresh the page.";
+  }
+  if (/429|rate.?limit/i.test(raw)) {
+    return "Too many requests. Please wait a moment and try again.";
+  }
+  if (/403|forbidden|content.?policy|moderation/i.test(raw)) {
+    return "Your message was blocked. Try rephrasing or using a different model.";
+  }
+  if (/404|not.?found/i.test(raw)) {
+    return "This model is currently unavailable. Try a different model.";
+  }
+  if (/402|insufficient|credits/i.test(raw)) {
+    return "This model requires credits. Choose a free model instead.";
+  }
+
+  return raw.length > 120 ? "Something went wrong. Please try again." : raw;
+}
 
 const getMessageTextContent = (message) =>
   message.parts
@@ -83,7 +141,8 @@ const MessageViewWithForm = ({ chatId }) => {
     },
     onError: (e) => {
       console.error("Chat stream error:", e);
-      toast.error(e.message || "Failed to generate AI response.");
+      const msg = extractErrorMessage(e);
+      toast.error(msg);
     },
     onFinish: (message) => {
       queryClient.invalidateQueries({ queryKey: ["chats"] });
@@ -93,17 +152,27 @@ const MessageViewWithForm = ({ chatId }) => {
 
   React.useEffect(() => {
     if (chatError) {
-      // Surface fetch/stream errors even when they arrive via the hook.
-      toast.error(chatError.message || "Failed to generate AI response.");
+      toast.error(extractErrorMessage(chatError));
     }
   }, [chatError]);
 
   const [input, setInput] = useState("");
   const handleInputChange = (e) => setInput(e.target.value);
-  const handleSubmit = (e, options) => {
+  const handleSubmit = async (e, options) => {
     e?.preventDefault?.();
-    if (!input.trim()) return;
-    sendMessage({ text: input }, options);
+    const files = options?.files || [];
+    if (!input.trim() && files.length === 0) return;
+
+    // Convert File objects to FileUIPart[] (base64 data URLs) so the
+    // streaming API can attach images/files to the user message.
+    const parts = files.length ? await filesToFileUIParts(files) : [];
+
+    const payload = {
+      ...(input.trim() ? { text: input } : {}),
+      ...(parts.length ? { files: parts } : {}),
+    };
+
+    await sendMessage(payload, options);
     setInput("");
   };
 

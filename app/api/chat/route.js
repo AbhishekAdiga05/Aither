@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { DEFAULT_MODEL_ID } from "@/lib/ai-models";
 import { getAllowedFreeModelIds } from "@/lib/free-models.mjs";
 import { rateLimit } from "@/lib/rate-limit.mjs";
+import { classifyAiError } from "@/lib/ai-errors";
 
 const MAX_CONTEXT_MESSAGES = 20;
 const MAX_CONTEXT_CHARS = parseInt(process.env.MAX_CONTEXT_CHARS ?? "12000", 10);
@@ -217,12 +218,13 @@ export async function POST(req) {
           select: { content: true, createdAt: true },
         });
 
-        const incoming = toPlainTextContent(latestUserMessage);
+        // Compare the full serialized parts (text + files) so consecutive
+        // image-only or attachment-heavy messages are never dropped.
+        const incoming = partsToJSON(latestUserMessage);
         const recent =
           lastStored &&
           Date.now() - new Date(lastStored.createdAt).getTime() < 10_000;
-        const sameContent =
-          lastStored && toPlainTextContent({ content: lastStored.content }) === incoming;
+        const sameContent = lastStored && lastStored.content === incoming;
 
         if (!recent || !sameContent) {
           await db.message.create({
@@ -248,6 +250,9 @@ export async function POST(req) {
               plugins: [{ id: "web", max_results: 5 }],
             }
           : undefined,
+      },
+      onError: (error) => {
+        console.error("❌ Stream error:", error);
       },
     });
 
@@ -305,12 +310,14 @@ export async function POST(req) {
     });
   } catch (error) {
     console.error("❌ API Route Error:", error);
+    const classified = classifyAiError(error);
     return new Response(
       JSON.stringify({
-        error: error.message || "Internal server error",
+        error: classified.message,
+        code: classified.code,
       }),
       {
-        status: 500,
+        status: classified.status,
         headers: { "Content-Type": "application/json" },
       },
     );

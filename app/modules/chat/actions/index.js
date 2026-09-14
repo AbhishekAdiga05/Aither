@@ -8,12 +8,78 @@ import { generateText } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { CHAT_SYSTEM_PROMPT } from "@/lib/prompt";
 import { DEFAULT_MODEL_ID } from "@/lib/ai-models";
+import { getAllowedFreeModelIds } from "@/lib/free-models.mjs";
+import { classifyAiError } from "@/lib/ai-errors";
 
 const provider = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
 const resolveModelId = (model) => model || DEFAULT_MODEL_ID;
+
+/**
+ * Parse a stored message's content. Messages are stored as either a JSON
+ * string of parts (streaming route / home form) or plain text.
+ * Returns a parts array.
+ */
+const parseStoredParts = (content) => {
+  if (typeof content !== "string") {
+    return [{ type: "text", text: content ?? "" }];
+  }
+  try {
+    const parsed = JSON.parse(content);
+    if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.type) {
+      return parsed;
+    }
+  } catch {
+    // Not JSON — plain text.
+  }
+  return [{ type: "text", text: content }];
+};
+
+/**
+ * Convert parts to model message content (text parts → text, file parts →
+ * file/image data) so attachments reach the model correctly.
+ */
+const partsToModelContent = (parts) =>
+  parts
+    .filter((p) => p.type === "text" || p.type === "file")
+    .map((p) => {
+      if (p.type === "text") return { type: "text", text: p.text };
+      if (p.type === "file") {
+        return { type: "file", data: p.url, mediaType: p.mediaType, filename: p.filename };
+      }
+      return null;
+    })
+    .filter(Boolean);
+
+const storedMessagesToModelMessages = (messages) =>
+  messages.map((msg) => ({
+    role: msg.messageRole === MessageRole.USER ? "user" : "assistant",
+    content: partsToModelContent(parseStoredParts(msg.content)),
+  }));
+
+/**
+ * Validate that a model ID is in the allowed free-model list.
+ * Returns null on success, or a structured error object on failure.
+ */
+async function validateModel(modelId) {
+  try {
+    const allowed = await getAllowedFreeModelIds();
+    if (!allowed.includes(modelId)) {
+      return {
+        success: false,
+        message:
+          "The selected model is unavailable in this app. Please pick a different model.",
+        code: "MODEL_NOT_ALLOWED",
+      };
+    }
+  } catch {
+    // If we can't fetch the catalog, allow the request — the provider
+    // itself will reject truly invalid models.
+  }
+  return null;
+}
 
 export const createMessageInChat = async (values, chatId) => {
   const user = await currentUser();
@@ -46,10 +112,13 @@ export const createMessageInChat = async (values, chatId) => {
 
   model = resolveModelId(model);
 
+  const modelError = await validateModel(model);
+  if (modelError) return modelError;
+
   const userMessage = await db.message.create({
     data: {
       model,
-      content,
+      content: JSON.stringify([{ type: "text", text: content }]),
       messageRole: MessageRole.USER,
       messageType: MessageType.NORMAL,
       chatId,
@@ -62,10 +131,7 @@ export const createMessageInChat = async (values, chatId) => {
     orderBy: { createdAt: "asc" },
   });
 
-  const aiMessages = previousMessages.map((msg) => ({
-    role: msg.messageRole === MessageRole.USER ? "user" : "assistant",
-    content: msg.content,
-  }));
+  const aiMessages = storedMessagesToModelMessages(previousMessages);
 
   let assistantContent = null;
 
@@ -78,7 +144,13 @@ export const createMessageInChat = async (values, chatId) => {
     assistantContent = result.text;
   } catch (error) {
     console.error("AI generation error:", error);
-    return { success: false, message: "Failed to generate AI response" };
+    const classified = classifyAiError(error);
+    return {
+      success: false,
+      message: classified.message,
+      code: classified.code,
+      status: classified.status,
+    };
   }
 
   const Assistantmessage = await db.message.create({
@@ -107,14 +179,31 @@ export const createChatWithMessage = async (values) => {
     const user = await currentUser();
     if (!user) return { success: false, message: "Unauthorized user" };
 
-    const { content, model: inputModel } = values;
+    const { content, model: inputModel, files } = values;
     if (!content || !content.trim()) {
       return { success: false, message: "Message content is required" };
     }
 
     const model = resolveModelId(inputModel);
 
+    const modelError = await validateModel(model);
+    if (modelError) return modelError;
+
     const title = content.slice(0, 50) + (content.length > 50 ? "..." : "");
+
+    // Store the user message as both text and file parts, matching the
+    // format the streaming API route writes to the DB so hydration works.
+    const parts = [
+      { type: "text", text: content },
+      ...(Array.isArray(files)
+        ? files.map((f) => ({
+            type: "file",
+            mediaType: f.mediaType,
+            url: f.url,
+            filename: f.filename,
+          }))
+        : []),
+    ];
 
     // Create chat WITH initial user message
     const chat = await db.chat.create({
@@ -124,7 +213,7 @@ export const createChatWithMessage = async (values) => {
         userId: user.id,
         messages: {
           create: {
-            content,
+            content: JSON.stringify(parts),
             messageRole: MessageRole.USER,
             messageType: MessageType.NORMAL,
             model,
@@ -253,15 +342,15 @@ export const generateAiResponse = async (chatId) => {
 
   const model = resolveModelId(chat.model);
 
+  const modelError = await validateModel(model);
+  if (modelError) return modelError;
+
   const previousMessages = await db.message.findMany({
     where: { chatId },
     orderBy: { createdAt: "asc" },
   });
 
-  const aiMessages = previousMessages.map((msg) => ({
-    role: msg.messageRole === MessageRole.USER ? "user" : "assistant",
-    content: msg.content,
-  }));
+  const aiMessages = storedMessagesToModelMessages(previousMessages);
 
   let assistantContent = null;
   try {
@@ -273,7 +362,13 @@ export const generateAiResponse = async (chatId) => {
     assistantContent = result.text;
   } catch (error) {
     console.error("AI generation error (auto-trigger):", error);
-    return { success: false, message: "Failed to generate AI response" };
+    const classified = classifyAiError(error);
+    return {
+      success: false,
+      message: classified.message,
+      code: classified.code,
+      status: classified.status,
+    };
   }
 
   const assistantMessage = await db.message.create({
