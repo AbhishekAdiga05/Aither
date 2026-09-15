@@ -12,9 +12,29 @@ function hasSessionCookie(request) {
   return SESSION_COOKIES.some((name) => request.cookies.get(name));
 }
 
+const authBaseURL = (process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "").trim();
+let extraOrigin = "";
+try {
+  if (authBaseURL) extraOrigin = new URL(authBaseURL).origin;
+} catch {}
+
+const oauthSources = [
+  "https://github.com",
+  "https://*.github.com",
+  "https://accounts.google.com",
+  "https://*.google.com",
+].join(" ");
+
+const deployOrigins = [
+  "https://*.vercel.app",
+  "https://*.vercel.com",
+  "https://neon-pulse-chat.netlify.app",
+  "https://*.netlify.app",
+].join(" ");
+
 const nonceSource = (nonce) =>
   process.env.NODE_ENV === "production"
-    ? `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://*.googleusercontent.com https://*.githubusercontent.com; font-src 'self' data:; connect-src 'self' https://*.vercel.app https://*.vercel.com https://neon-pulse-chat.netlify.app https://*.netlify.app https://github.com https://*.github.com https://accounts.google.com https://*.googleapis.com https://*.google.com; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' https://github.com https://*.github.com https://accounts.google.com https://*.google.com; frame-src 'self' https://github.com https://*.github.com https://accounts.google.com https://*.google.com; frame-ancestors 'none'; upgrade-insecure-requests;`
+    ? `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://*.googleusercontent.com https://*.githubusercontent.com; font-src 'self' data:; connect-src 'self' ${extraOrigin} ${deployOrigins} https://github.com https://*.github.com https://accounts.google.com https://*.googleapis.com https://*.google.com; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' ${extraOrigin} ${oauthSources}; frame-src 'self' ${extraOrigin} ${oauthSources}; frame-ancestors 'none'; upgrade-insecure-requests;`
     : null;
 
 export function proxy(request) {
