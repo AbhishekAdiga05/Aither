@@ -42,10 +42,12 @@ export function ModelSelector({
   };
 
   const isFreeModel = (model) => {
+    // pricing.request is not always present in the OpenRouter API response;
+    // treat absence as "0" (free). Also guard against a null pricing object.
     return (
-      model.pricing.prompt === "0" &&
-      model.pricing.completion === "0" &&
-      model.pricing.request === "0"
+      (model.pricing?.prompt ?? "0") === "0" &&
+      (model.pricing?.completion ?? "0") === "0" &&
+      (model.pricing?.request ?? "0") === "0"
     );
   };
 
@@ -57,11 +59,13 @@ export function ModelSelector({
 
   const filteredModels = models.filter((model) => {
     const query = searchQuery.toLowerCase();
+    // Guard against null/undefined description and modality — OpenRouter
+    // occasionally returns models with missing fields.
     return (
-      model.name.toLowerCase().includes(query) ||
-      model.description.toLowerCase().includes(query) ||
-      model.id.toLowerCase().includes(query) ||
-      model.architecture.modality.toLowerCase().includes(query)
+      (model.name?.toLowerCase() ?? "").includes(query) ||
+      (model.description?.toLowerCase() ?? "").includes(query) ||
+      (model.id?.toLowerCase() ?? "").includes(query) ||
+      (model.architecture?.modality?.toLowerCase() ?? "").includes(query)
     );
   });
 

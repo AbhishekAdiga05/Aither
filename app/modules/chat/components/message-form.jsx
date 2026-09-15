@@ -30,6 +30,7 @@ export default function MessageForm({
   isLoading,
   isStreaming = false,
   onStop,
+  onModelSelect, // optional: notifies parent when the user picks a model
 }) {
   const { data: models, isPending } = useAIModels();
 
@@ -225,7 +226,10 @@ export default function MessageForm({
                 <ModelSelector
                   models={models?.models}
                   selectedModelId={selectedModel}
-                  onModelSelect={setSelectedModelOverride}
+                  onModelSelect={(id) => {
+                    setSelectedModelOverride(id);
+                    onModelSelect?.(id); // bubble up to parent for body override
+                  }}
                   className="h-9 rounded-xl border-none bg-transparent px-2.5 text-xs hover:bg-accent/70"
                 />
               )}

@@ -4,60 +4,12 @@ import db from "@/lib/db";
 import { currentUser } from "@/app/modules/authentication/actions";
 import { MessageRole, MessageType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { generateText } from "ai";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { CHAT_SYSTEM_PROMPT } from "@/lib/prompt";
 import { DEFAULT_MODEL_ID } from "@/lib/ai-models";
 import { getAllowedFreeModelIds } from "@/lib/free-models.mjs";
-import { classifyAiError } from "@/lib/ai-errors";
-
-const provider = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
 
 const resolveModelId = (model) => model || DEFAULT_MODEL_ID;
 
-/**
- * Parse a stored message's content. Messages are stored as either a JSON
- * string of parts (streaming route / home form) or plain text.
- * Returns a parts array.
- */
-const parseStoredParts = (content) => {
-  if (typeof content !== "string") {
-    return [{ type: "text", text: content ?? "" }];
-  }
-  try {
-    const parsed = JSON.parse(content);
-    if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.type) {
-      return parsed;
-    }
-  } catch {
-    // Not JSON — plain text.
-  }
-  return [{ type: "text", text: content }];
-};
 
-/**
- * Convert parts to model message content (text parts → text, file parts →
- * file/image data) so attachments reach the model correctly.
- */
-const partsToModelContent = (parts) =>
-  parts
-    .filter((p) => p.type === "text" || p.type === "file")
-    .map((p) => {
-      if (p.type === "text") return { type: "text", text: p.text };
-      if (p.type === "file") {
-        return { type: "file", data: p.url, mediaType: p.mediaType, filename: p.filename };
-      }
-      return null;
-    })
-    .filter(Boolean);
-
-const storedMessagesToModelMessages = (messages) =>
-  messages.map((msg) => ({
-    role: msg.messageRole === MessageRole.USER ? "user" : "assistant",
-    content: partsToModelContent(parseStoredParts(msg.content)),
-  }));
 
 /**
  * Validate that a model ID is in the allowed free-model list.
@@ -115,6 +67,10 @@ export const createMessageInChat = async (values, chatId) => {
   const modelError = await validateModel(model);
   if (modelError) return modelError;
 
+  // ✅ Only persist the user message. The streaming /api/chat route (via the
+  // useChat hook's sendMessage / regenerate) handles all AI responses.
+  // This path is only kept for legacy compatibility — the primary UI path is
+  // the streaming route, so we intentionally do NOT call generateText() here.
   const userMessage = await db.message.create({
     data: {
       model,
@@ -125,51 +81,13 @@ export const createMessageInChat = async (values, chatId) => {
     },
   });
 
-  // Fetch all messages (including the one just created) for AI context
-  const previousMessages = await db.message.findMany({
-    where: { chatId },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const aiMessages = storedMessagesToModelMessages(previousMessages);
-
-  let assistantContent = null;
-
-  try {
-    const result = await generateText({
-      model: provider.chat(model),
-      system: CHAT_SYSTEM_PROMPT,
-      messages: aiMessages,
-    });
-    assistantContent = result.text;
-  } catch (error) {
-    console.error("AI generation error:", error);
-    const classified = classifyAiError(error);
-    return {
-      success: false,
-      message: classified.message,
-      code: classified.code,
-      status: classified.status,
-    };
-  }
-
-  const Assistantmessage = await db.message.create({
-    data: {
-      model,
-      chatId,
-      content: assistantContent,
-      messageRole: MessageRole.ASSISTANT,
-      messageType: MessageType.NORMAL,
-    },
-  });
-
   revalidatePath(`/chat/${chatId}`);
   return {
     success: true,
-    message: "Chat created successfully",
+    message: "Message saved",
     data: {
       userMessage,
-      Assistantmessage,
+      Assistantmessage: null,
     },
   };
 };
@@ -324,8 +242,10 @@ export const getChatById = async (chatId) => {
 
 /**
  * Generate only the AI response for an existing chat.
- * Used by auto-trigger — the user message already exists in DB, so we must
- * NOT create another one (that would cause duplicates).
+ * NOTE: This server action is kept for backwards-compatibility but the
+ * primary path now goes through the streaming /api/chat route via the
+ * useChat hook's regenerate() call — which is non-blocking and streams
+ * tokens to the UI in real time. Prefer that path over this one.
  */
 export const generateAiResponse = async (chatId) => {
   const user = await currentUser();
@@ -340,52 +260,13 @@ export const generateAiResponse = async (chatId) => {
     return { success: false, message: "Chat not found or has no model" };
   }
 
-  const model = resolveModelId(chat.model);
-
-  const modelError = await validateModel(model);
-  if (modelError) return modelError;
-
-  const previousMessages = await db.message.findMany({
-    where: { chatId },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const aiMessages = storedMessagesToModelMessages(previousMessages);
-
-  let assistantContent = null;
-  try {
-    const result = await generateText({
-      model: provider.chat(model),
-      system: CHAT_SYSTEM_PROMPT,
-      messages: aiMessages,
-    });
-    assistantContent = result.text;
-  } catch (error) {
-    console.error("AI generation error (auto-trigger):", error);
-    const classified = classifyAiError(error);
-    return {
-      success: false,
-      message: classified.message,
-      code: classified.code,
-      status: classified.status,
-    };
-  }
-
-  const assistantMessage = await db.message.create({
-    data: {
-      model,
-      chatId,
-      content: assistantContent,
-      messageRole: MessageRole.ASSISTANT,
-      messageType: MessageType.NORMAL,
-    },
-  });
-
-  revalidatePath(`/chat/${chatId}`);
+  // Signal to the caller that it should use the streaming route instead.
+  // The client-side auto-trigger already calls regenerate() via useChat,
+  // so this server action should never be reached in normal operation.
   return {
-    success: true,
-    message: "AI response generated",
-    data: { assistantMessage },
+    success: false,
+    message: "Use the streaming /api/chat route for AI responses.",
+    code: "USE_STREAMING_ROUTE",
   };
 };
 

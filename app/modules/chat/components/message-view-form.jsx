@@ -134,7 +134,7 @@ const MessageViewWithForm = ({ chatId }) => {
   } = useChat({
     api: "/api/chat",
     initialMessages,
-    experimental_throttle: 30,
+    experimental_throttle: 8, // reduced from 30 — smoother streaming rendering
     body: {
       chatId,
       model: chatModel,
@@ -157,6 +157,8 @@ const MessageViewWithForm = ({ chatId }) => {
   }, [chatError]);
 
   const [input, setInput] = useState("");
+  // Track model selected inside MessageForm so it flows through sendMessage body
+  const [selectedModel, setSelectedModel] = useState(null);
   const handleInputChange = (e) => setInput(e.target.value);
   const handleSubmit = async (e, options) => {
     e?.preventDefault?.();
@@ -172,7 +174,15 @@ const MessageViewWithForm = ({ chatId }) => {
       ...(parts.length ? { files: parts } : {}),
     };
 
-    await sendMessage(payload, options);
+    // Merge the actively-selected model into the body so it overrides the
+    // useChat default body (which may have an undefined chatModel during
+    // initial hydration — fixing the silent model-mismatch bug).
+    const bodyOverride = {
+      ...options?.body,
+      model: selectedModel ?? options?.body?.model ?? chatModel,
+    };
+
+    await sendMessage(payload, { ...options, body: bodyOverride });
     setInput("");
   };
 
@@ -193,6 +203,9 @@ const MessageViewWithForm = ({ chatId }) => {
     if (
       autoTrigger &&
       !hasAutoTriggeredRef.current &&
+      // Only fire when the stream is idle — prevents double-fire during React
+      // re-renders that happen after the initial regenerate() call.
+      status === "ready" &&
       initialMessages.length === 1 &&
       initialMessages[0].role === "user" &&
       messages.length >= 1 &&
@@ -210,6 +223,7 @@ const MessageViewWithForm = ({ chatId }) => {
     regenerate,
     chatId,
     chatModel,
+    status,
   ]);
 
   const lastMessage = messages[messages.length - 1];
@@ -301,6 +315,7 @@ const MessageViewWithForm = ({ chatId }) => {
             isLoading={isLoading}
             isStreaming={isStreamingAssistant}
             onStop={stop}
+            onModelSelect={setSelectedModel}
           />
         </div>
       </div>
