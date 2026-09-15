@@ -31,7 +31,7 @@ The most important rule: **the app only ever uses free AI models.** Paid models 
 | **Live streaming** | Replies stream token-by-token using SSE — no waiting for the whole answer. |
 | **Saved chats** | Every conversation is stored in PostgreSQL and listed in a sidebar, grouped by date. |
 | **Model picker** | Browse and search free models with details like context size, vision support, and pricing. |
-| **Default model** | Chat opens on `Nex N2.5 Mini`, a capable, fully free model — no setup needed. |
+| **Default model** | Chat opens on `LFM 2.5 2.6B`, a fast, fully free model — no setup needed. |
 | **Secure login** | Sign in with GitHub or Google (Better Auth). First visitors see a personalized "Welcome". |
 | **Web search toggle** | Optionally ground each message with live web results (max 5 pages). |
 | **Rate limits & abuse protection** | Per-user limits on chat and on sign-in attempts, backed by the database. |
@@ -75,6 +75,9 @@ Save your message to the database  (so it's never lost)
  Stream the AI reply back to you (token by token)
       │
       ▼
+ If the model errors/hangs → auto-retry on another verified free model
+      │
+      ▼
  Save the assistant's reply to the database
 ```
 
@@ -83,6 +86,7 @@ Save your message to the database  (so it's never lost)
 - **Your message is saved before the AI even replies.** If you refresh or close the page mid-stream, your message is still in your history.
 - **Duplicate sends are blocked.** If you retry the same message within 10 seconds, it's not saved twice.
 - **Context is trimmed.** Only the most recent ~20 messages are sent to the model (and capped at ~12,000 characters), so long chats stay fast and cheap.
+- **Built-in AI fallback.** If the selected model returns an error, times out, or returns nothing, the server automatically retries with up to 3 other verified free models — a hiccup in one model rarely means "no answer".
 
 ---
 
@@ -125,7 +129,7 @@ npm run dev             # open http://localhost:3000
 | `NEXT_PUBLIC_APP_URL` | Prod only | Optional alias for the public URL |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | For GitHub login | GitHub OAuth app credentials |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | For Google login | Google OAuth credentials |
-| `OPENROUTER_DEFAULT_MODEL` | No | Overrides the default chat model (defaults to `nex-agi/nex-n2.5-mini:free`) |
+| `OPENROUTER_DEFAULT_MODEL` | No | Overrides the default chat model (defaults to `liquid/lfm-2.5-2.6b:free`) |
 | `CHAT_RATE_LIMIT_MAX` | No | Max chat requests per window (default `40`) |
 | `CHAT_RATE_LIMIT_WINDOW_MS` | No | Chat rate-limit window in ms (default `600000` = 10 min) |
 | `MAX_CONTEXT_CHARS` | No | Max characters of prior context sent to the model (default `12000`) |
@@ -154,7 +158,10 @@ npm run dev             # open http://localhost:3000
 
 ### Default model
 
-The app starts every new chat on **`nex-agi/nex-n2.5-mini:free`** (a fully free model that also understands images). To change it, either:
+The app starts every new chat on **`liquid/lfm-2.5-2.6b:free`** (a fast, fully
+free model). If that model is temporarily overloaded or unavailable, the server
+automatically falls back to the next verified free model — you still get a
+reply instead of an error. To change the default, either:
 
 - set `OPENROUTER_DEFAULT_MODEL` in your environment, or
 - just pick another model from the picker inside any chat.
@@ -273,7 +280,9 @@ No. Every model is verified `$0` on the OpenRouter catalog before a request is a
 Nowhere. The server blocks them so a client-side trick can never rack up charges on your key.
 
 **What is the default model?**
-`nex-agi/nex-n2.5-mini:free` — a free model that also supports image inputs.
+`liquid/lfm-2.5-2.6b:free` — a fast, fully free model. If a model is
+unavailable, the server transparently falls back to another verified free
+model so requests rarely fail.
 
 **Are my chats private?**
 Each user only sees their own chats. All data lives in your own PostgreSQL database.

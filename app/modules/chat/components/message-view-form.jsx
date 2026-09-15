@@ -8,7 +8,7 @@ import MessageForm from "./message-form";
 import { useChat } from "@ai-sdk/react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Square } from "lucide-react";
+import { RefreshCw, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { filesToFileUIParts } from "../lib/attachments";
 
@@ -140,6 +140,7 @@ const MessageViewWithForm = ({ chatId }) => {
     stop,
     status,
     setMessages,
+    clearError,
     error: chatError,
   } = useChat({
     api: "/api/chat",
@@ -195,11 +196,26 @@ const MessageViewWithForm = ({ chatId }) => {
       model: selectedModel ?? options?.body?.model ?? chatModel,
     };
 
-    await sendMessage(payload, { ...options, body: bodyOverride });
-    setInput("");
+    try {
+      await sendMessage(payload, { ...options, body: bodyOverride });
+      setInput("");
+    } catch (err) {
+      // The stream error is already surfaced via useChat's onError + the
+      // inline retry banner — just keep the typed text so nothing is lost.
+      console.error("Failed to send message:", err);
+    }
   };
 
   const isLoading = status === "submitted" || status === "streaming";
+
+  // ✅ One-tap recovery when a model fails: re-send the last user message
+  // on the streaming route (the server auto-falls-back to another free model).
+  const handleRetry = () => {
+    clearError();
+    regenerate({
+      body: { skipUserMessage: true, chatId, model: chatModel },
+    });
+  };
 
   // Hydrate messages once the chat loads (only when we have no messages yet).
   useEffect(() => {
@@ -225,9 +241,15 @@ const MessageViewWithForm = ({ chatId }) => {
       last?.role === "user"
     ) {
       hasAutoTriggeredRef.current = true;
-      regenerate({
-        body: { skipUserMessage: true, chatId, model: chatModel },
-      });
+      try {
+        regenerate({
+          body: { skipUserMessage: true, chatId, model: chatModel },
+        });
+      } catch (err) {
+        // If the stream transport throws synchronously, fall back to the
+        // inline retry banner so the user is never left stuck.
+        console.error("Auto-trigger regenerate failed:", err);
+      }
     }
   }, [
     autoTrigger,
@@ -310,6 +332,32 @@ const MessageViewWithForm = ({ chatId }) => {
               </div>
             </div>
           )}
+
+          {/* AI Error Banner with one-tap retry */}
+          {status === "error" &&
+            messages[messages.length - 1]?.role === "user" && (
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-destructive">
+                    The AI didn&apos;t respond.
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    The model may be overloaded or briefly unavailable. Retry
+                    now and the app will fall back to another working model.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRetry}
+                  className="shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                  Try again
+                </Button>
+              </div>
+            )}
 
           {/* Scroll anchor */}
           <div ref={messagesEndRef} />

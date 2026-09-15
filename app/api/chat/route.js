@@ -1,4 +1,8 @@
-import { convertToModelMessages, streamText } from "ai";
+import {
+  convertToModelMessages,
+  createUIMessageStreamResponse,
+  streamText,
+} from "ai";
 import { CHAT_SYSTEM_PROMPT } from "@/lib/prompt";
 import db from "@/lib/db";
 import { MessageRole, MessageType } from "@prisma/client";
@@ -6,7 +10,11 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { DEFAULT_MODEL_ID } from "@/lib/ai-models";
-import { getAllowedFreeModelIds, isModelAllowedSync } from "@/lib/free-models.mjs";
+import {
+  getAllowedFreeModelIds,
+  isModelAllowedSync,
+  SAFE_FREE_MODEL_IDS,
+} from "@/lib/free-models.mjs";
 import { rateLimit } from "@/lib/rate-limit.mjs";
 import { classifyAiError } from "@/lib/ai-errors";
 
@@ -17,6 +25,20 @@ export const maxDuration = 60;
 
 const MAX_CONTEXT_MESSAGES = 20;
 const MAX_CONTEXT_CHARS = parseInt(process.env.MAX_CONTEXT_CHARS ?? "12000", 10);
+
+// If a model produces no first token within this window we assume it's hung
+// (some "free" models stall indefinitely) and move on to a backup model.
+const FIRST_TOKEN_TIMEOUT_MS = parseInt(
+  process.env.AI_FIRST_TOKEN_TIMEOUT_MS ?? "15000",
+  10,
+);
+
+// Maximum number of models to try per request (requested model + backups).
+// Bounded so a fully-broken catalog can't burn the whole serverless budget.
+const MAX_FALLBACK_ATTEMPTS = parseInt(
+  process.env.AI_FALLBACK_ATTEMPTS ?? "3",
+  10,
+);
 
 // OpenRouter requires HTTP-Referer + X-Title for free model access.
 // Without these headers free models may return 403 or be deprioritised.
@@ -86,6 +108,200 @@ const textOnlyParts = (msg) =>
   ensurePartsArray(msg).filter((p) => TEXT_PART_TYPES.has(p.type));
 
 const partsToJSON = (msg) => JSON.stringify(textOnlyParts(msg));
+
+/**
+ * Persist the assistant reply + keep the chat model in sync once a stream
+ * finishes. `modelUsed` is the model that actually produced the reply
+ * (which may be a fallback model if the requested one failed).
+ */
+function buildAssistantSaver({ chatId, skipUserMessage, modelUsed }) {
+  return async ({ responseMessage }) => {
+    try {
+      const ops = [];
+
+      if (skipUserMessage) {
+        // ✅ Regenerate path: replace the latest assistant reply instead of
+        // appending another duplicate.
+        const lastAssistant = await db.message.findFirst({
+          where: { chatId, messageRole: MessageRole.ASSISTANT },
+          orderBy: { createdAt: "desc" },
+          select: { id: true },
+        });
+        if (lastAssistant) {
+          ops.push(db.message.delete({ where: { id: lastAssistant.id } }));
+        }
+      }
+
+      const assistantTextParts = textOnlyParts(responseMessage);
+      if (assistantTextParts.length > 0) {
+        ops.push(
+          db.message.create({
+            data: {
+              chatId,
+              content: JSON.stringify(assistantTextParts),
+              messageRole: MessageRole.ASSISTANT,
+              model: modelUsed,
+              messageType: MessageType.NORMAL,
+            },
+          }),
+        );
+      }
+
+      // Keep the chat's model in sync and bump updatedAt so sidebar
+      // ordering stays accurate.
+      ops.push(db.chat.update({ where: { id: chatId }, data: { model: modelUsed } }));
+
+      if (ops.length > 0) {
+        await db.$transaction(ops);
+      }
+    } catch (error) {
+      console.error("❌ Error saving messages:", error);
+    }
+  };
+}
+
+/**
+ * Stream a chat reply while automatically recovering from unreliable free
+ * models. We try `candidates` in order; the first model that produces a
+ * first token within `FIRST_TOKEN_TIMEOUT_MS` wins and its stream is
+ * relayed to the client. A model that errors (404/403/429), times out, or
+ * returns an empty stream is skipped in favour of the next candidate.
+ *
+ * This is what turns "the model didn't respond" into a working reply: free
+ * OpenRouter models are occasionally overloaded or temporarily removed, so
+ * a single doomed request previously left the user with nothing.
+ */
+async function streamWithFallback({
+  candidates,
+  messages,
+  system,
+  useWebSearch,
+  originalMessages,
+  skipUserMessage,
+  chatId,
+  headers,
+}) {
+  let lastError = null;
+
+  for (const candidate of candidates) {
+    const controller = new AbortController();
+    let timer = null;
+
+    try {
+      const result = streamText({
+        model: provider.chat(candidate),
+        messages,
+        system,
+        maxRetries: 0, // surface errors immediately; each attempt is a fresh model
+        abortSignal: controller.signal,
+        providerOptions: {
+          openrouter: useWebSearch
+            ? { plugins: [{ id: "web", max_results: 5 }] }
+            : undefined,
+        },
+        onError: (error) => {
+          console.error(`❌ Stream error (${candidate}):`, error);
+        },
+      });
+
+      const uiStream = result.toUIMessageStream({
+        sendReasoning: false,
+        originalMessages,
+        onFinish: buildAssistantSaver({
+          chatId,
+          skipUserMessage,
+          modelUsed: candidate,
+        }),
+      });
+
+      const reader = uiStream.getReader();
+
+      // Reading the first chunk is what actually triggers the OpenRouter
+      // call. Race it against a timeout so a hung free model (which stalls
+      // forever instead of failing) is abandoned quickly and loudly.
+      const firstRead = reader.read();
+      const guarded = Promise.race([
+        firstRead,
+        new Promise((_, reject) => {
+          timer = setTimeout(() => {
+            controller.abort();
+            reject(
+              new Error(
+                `The model ${candidate} did not respond in time.`,
+              ),
+            );
+          }, FIRST_TOKEN_TIMEOUT_MS);
+        }),
+      ]);
+      guarded.finally(() => clearTimeout(timer));
+      // If the aborted read settles later, absorb its rejection.
+      firstRead.catch(() => {});
+
+      const first = await guarded;
+
+      if (first.done) {
+        lastError = new Error(
+          `The model ${candidate} returned an empty response.`,
+        );
+        continue;
+      }
+
+      if (first.value?.type === "error") {
+        lastError = new Error(
+          first.value.errorText || `The model ${candidate} failed to respond.`,
+        );
+        continue;
+      }
+
+      // ✅ Model responded — relay the partial stream (first chunk already
+      // consumed) to the client. Cancellation (user presses Stop) aborts
+      // the underlying provider request too.
+      return createUIMessageStreamResponse({
+        stream: new ReadableStream({
+          async start(relayController) {
+            try {
+              relayController.enqueue(first.value);
+              while (true) {
+                const next = await reader.read();
+                if (next.done) {
+                  relayController.close();
+                  return;
+                }
+                relayController.enqueue(next.value);
+              }
+            } catch (error) {
+              relayController.error(error);
+            }
+          },
+          cancel() {
+            try {
+              reader.cancel();
+            } catch {
+              // Already closed/aborted — ignore.
+            }
+            controller.abort();
+          },
+        }),
+        headers,
+      });
+    } catch (error) {
+      clearTimeout(timer);
+      lastError = error;
+      // Model failed before producing a chunk — try the next candidate.
+    }
+  }
+
+  // Every candidate failed — return a classified, human-readable error.
+  console.error("❌ All AI models failed:", lastError);
+  const classified = classifyAiError(lastError ?? new Error("AI request failed"));
+  return new Response(
+    JSON.stringify({ error: classified.message, code: classified.code }),
+    {
+      status: classified.status,
+      headers: { "Content-Type": "application/json", ...headers },
+    },
+  );
+}
 
 export async function POST(req) {
   try {
@@ -265,73 +481,21 @@ export async function POST(req) {
       }
     }
 
-    const result = streamText({
-      model: provider.chat(model),
+    return streamWithFallback({
+      candidates: [
+        model,
+        ...SAFE_FREE_MODEL_IDS.filter((id) => id !== model),
+      ].slice(0, MAX_FALLBACK_ATTEMPTS),
       messages: modelMessages,
       system: CHAT_SYSTEM_PROMPT,
-      maxRetries: 0, // surface errors immediately; don't silently retry and freeze the UI
-      providerOptions: {
-        openrouter: useWebSearch
-          ? {
-              plugins: [{ id: "web", max_results: 5 }],
-            }
-          : undefined,
-      },
-      onError: (error) => {
-        console.error("❌ Stream error:", error);
-      },
-    });
-
-    return result.toUIMessageStreamResponse({
-      sendReasoning: false,
+      useWebSearch,
       originalMessages: normalizedNewMessages,
+      skipUserMessage,
+      chatId,
       headers: {
         "Cache-Control": "no-store",
         "X-Accel-Buffering": "no",
         ...rateLimitHeaders,
-      },
-      onFinish: async ({ responseMessage }) => {
-        try {
-          const ops = [];
-
-          if (skipUserMessage) {
-            // ✅ Regenerate path: replace the latest assistant reply instead of
-            // appending another duplicate.
-            const lastAssistant = await db.message.findFirst({
-              where: { chatId, messageRole: MessageRole.ASSISTANT },
-              orderBy: { createdAt: "desc" },
-              select: { id: true },
-            });
-            if (lastAssistant) {
-              ops.push(db.message.delete({ where: { id: lastAssistant.id } }));
-            }
-          }
-
-          const assistantTextParts = textOnlyParts(responseMessage);
-          if (assistantTextParts.length > 0) {
-            ops.push(
-              db.message.create({
-                data: {
-                  chatId,
-                  content: JSON.stringify(assistantTextParts),
-                  messageRole: MessageRole.ASSISTANT,
-                  model,
-                  messageType: MessageType.NORMAL,
-                },
-              }),
-            );
-          }
-
-          // Keep the chat's model in sync and bump updatedAt so sidebar
-          // ordering stays accurate.
-          ops.push(db.chat.update({ where: { id: chatId }, data: { model } }));
-
-          if (ops.length > 0) {
-            await db.$transaction(ops);
-          }
-        } catch (error) {
-          console.error("❌ Error saving messages:", error);
-        }
       },
     });
   } catch (error) {
