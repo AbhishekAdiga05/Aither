@@ -28,59 +28,69 @@ const getMessageParts = (content) => {
 
 /**
  * Extract a user-friendly error message from an AI SDK / fetch error.
- * The error can be a Error, a Response, or a nested object from the SDK.
+ * The error can be an Error, a Response, or a nested SDK error object.
  */
-function extractErrorMessage(err) {
+async function extractErrorMessage(err) {
   if (!err) return "Something went wrong. Please try again.";
 
-  // If it's a Response object (from fetch), try to parse the JSON body
-  if (err instanceof Response) {
-    return "Failed to generate AI response. Please try again.";
+  // The AI SDK may pass the raw Response — read its JSON body for the
+  // server's classified error message.
+  if (err instanceof Response || typeof err?.json === "function") {
+    try {
+      const body = await err.clone().json();
+      if (body?.error) return body.error;
+      if (body?.message) return body.message;
+    } catch {
+      // Can't parse body, fall through.
+    }
+    return "The AI model failed to respond. Try a different model.";
   }
 
   // Try multiple paths where the message might live
-  const raw =
+  let raw =
     err.message ??
     err.error?.message ??
     err.cause?.message ??
     err.body?.error ??
     "";
 
-  if (!raw) return "Something went wrong. Please try again.";
-
-  // If the raw message is JSON, try to parse it for a nested error
-  try {
-    const parsed = JSON.parse(raw);
-    if (parsed.error) return parsed.error;
-    if (parsed.message) return parsed.message;
-  } catch {
-    // Not JSON — use as-is.
+  // If raw is JSON, unwrap the nested error
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed.error) raw = parsed.error;
+      else if (parsed.message) raw = parsed.message;
+    } catch {
+      // Not JSON — use as-is.
+    }
   }
 
-  // Don't leak internal details — map common technical messages to friendly text
+  if (!raw) return "Something went wrong. Please try again.";
+
+  // Map technical messages to actionable user-friendly text
   if (/fetch failed|network|ECONNREFUSED|ENOTFOUND/i.test(raw)) {
     return "Could not reach the AI provider. Check your connection and try again.";
   }
   if (/timeout|abort/i.test(raw)) {
-    return "The request timed out. Please try again.";
+    return "The model took too long to respond. Try switching to a faster model.";
   }
   if (/401|unauthorized/i.test(raw)) {
     return "Authentication error. Please refresh the page.";
   }
-  if (/429|rate.?limit/i.test(raw)) {
-    return "Too many requests. Please wait a moment and try again.";
+  if (/429|rate.?limit|provider returned error/i.test(raw)) {
+    return "This model is overloaded. Switch to a different model and try again.";
   }
-  if (/403|forbidden|content.?policy|moderation/i.test(raw)) {
-    return "Your message was blocked. Try rephrasing or using a different model.";
+  if (/403|forbidden|agentic|harness/i.test(raw)) {
+    return "This model is not available for chat. Please switch to a different model.";
   }
-  if (/404|not.?found/i.test(raw)) {
-    return "This model is currently unavailable. Try a different model.";
+  if (/404|not.?found|no endpoints/i.test(raw)) {
+    return "This model is currently unavailable. Please switch to a different model.";
   }
   if (/402|insufficient|credits/i.test(raw)) {
-    return "This model requires credits. Choose a free model instead.";
+    return "This model requires credits. Please switch to a free model.";
   }
 
-  return raw.length > 120 ? "Something went wrong. Please try again." : raw;
+  return raw.length > 120 ? "The AI model returned an error. Try a different model." : raw;
 }
 
 const getMessageTextContent = (message) =>
@@ -139,10 +149,10 @@ const MessageViewWithForm = ({ chatId }) => {
       chatId,
       model: chatModel,
     },
-    onError: (e) => {
+    onError: async (e) => {
       console.error("Chat stream error:", e);
-      const msg = extractErrorMessage(e);
-      toast.error(msg);
+      const msg = await extractErrorMessage(e);
+      toast.error(msg, { duration: 6000 });
     },
     onFinish: (message) => {
       queryClient.invalidateQueries({ queryKey: ["chats"] });
@@ -150,11 +160,14 @@ const MessageViewWithForm = ({ chatId }) => {
     },
   });
 
+  // Deduplicated: onError above already shows the toast, so we only handle
+  // persistent chatError state (set when the stream closes with an error but
+  // onError wasn't called, e.g. network interruption after stream started).
   React.useEffect(() => {
-    if (chatError) {
-      toast.error(extractErrorMessage(chatError));
+    if (chatError && status === "error") {
+      extractErrorMessage(chatError).then((msg) => toast.error(msg, { duration: 6000 }));
     }
-  }, [chatError]);
+  }, [chatError, status]);
 
   const [input, setInput] = useState("");
   // Track model selected inside MessageForm so it flows through sendMessage body

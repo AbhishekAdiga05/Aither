@@ -6,15 +6,27 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { DEFAULT_MODEL_ID } from "@/lib/ai-models";
-import { getAllowedFreeModelIds } from "@/lib/free-models.mjs";
+import { getAllowedFreeModelIds, isModelAllowedSync } from "@/lib/free-models.mjs";
 import { rateLimit } from "@/lib/rate-limit.mjs";
 import { classifyAiError } from "@/lib/ai-errors";
+
+// Allow the streaming response up to 60 s on Vercel/Netlify before the
+// serverless function is killed. Without this the default timeout (10-30s)
+// cuts off slow free models mid-stream.
+export const maxDuration = 60;
 
 const MAX_CONTEXT_MESSAGES = 20;
 const MAX_CONTEXT_CHARS = parseInt(process.env.MAX_CONTEXT_CHARS ?? "12000", 10);
 
+// OpenRouter requires HTTP-Referer + X-Title for free model access.
+// Without these headers free models may return 403 or be deprioritised.
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const provider = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
+  headers: {
+    "HTTP-Referer": appUrl,
+    "X-Title": "NeonChat",
+  },
 });
 
 const toPlainTextContent = (msg) => {
@@ -137,10 +149,29 @@ export async function POST(req) {
       );
     }
 
-    // 🔒 Cost guard: only zero-cost models may run against the app's key.
-    // A client-supplied `model` can never invoke a paid model.
-    const allowedModelIds = await getAllowedFreeModelIds();
-    if (!allowedModelIds.includes(model)) {
+    // 🔒 Cost guard + ownership check — run in parallel to cut latency.
+    // Fast path: isModelAllowedSync is O(1) and covers all static safe models,
+    // so most requests skip the async network round-trip entirely.
+    // Slow path: only needed for models from the live catalog not yet in the
+    // static snapshot (rare). Both checks run concurrently with the DB query.
+    const isInStaticList = isModelAllowedSync(model);
+
+    const [allowedModelIds, chat] = await Promise.all([
+      // Only fetch the full async list if the sync check failed
+      isInStaticList ? Promise.resolve(null) : getAllowedFreeModelIds(),
+      // Ownership check in parallel
+      db.chat.findUnique({
+        where: { id: chatId, userId: session.user.id },
+        select: { id: true, model: true },
+      }),
+    ]);
+
+    // Evaluate model permission
+    const isAllowed =
+      isInStaticList ||
+      (Array.isArray(allowedModelIds) && allowedModelIds.includes(model));
+
+    if (!isAllowed) {
       return new Response(
         JSON.stringify({
           error: "The requested model is unavailable in this app.",
@@ -151,12 +182,6 @@ export async function POST(req) {
         },
       );
     }
-
-    // 🔒 Ownership check: only the chat owner may stream into this chat.
-    const chat = await db.chat.findUnique({
-      where: { id: chatId, userId: session.user.id },
-      select: { id: true, model: true },
-    });
 
     if (!chat) {
       return new Response(JSON.stringify({ error: "Chat not found" }), {
@@ -244,6 +269,7 @@ export async function POST(req) {
       model: provider.chat(model),
       messages: modelMessages,
       system: CHAT_SYSTEM_PROMPT,
+      maxRetries: 0, // surface errors immediately; don't silently retry and freeze the UI
       providerOptions: {
         openrouter: useWebSearch
           ? {
