@@ -34,7 +34,7 @@ const deployOrigins = [
 
 const nonceSource = (nonce) =>
   process.env.NODE_ENV === "production"
-    ? `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://*.googleusercontent.com https://*.githubusercontent.com; font-src 'self' data:; connect-src 'self' ${extraOrigin} ${deployOrigins} https://github.com https://*.github.com https://accounts.google.com https://*.googleapis.com https://*.google.com; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' ${extraOrigin} ${oauthSources}; frame-src 'self' ${extraOrigin} ${oauthSources}; frame-ancestors 'none'; upgrade-insecure-requests;`
+    ? `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://*.googleusercontent.com https://*.githubusercontent.com; font-src 'self' data:; manifest-src 'self' ${extraOrigin} https://vercel.com https://*.vercel.com; connect-src 'self' ${extraOrigin} ${deployOrigins} https://github.com https://*.github.com https://accounts.google.com https://*.googleapis.com https://*.google.com; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' ${extraOrigin} ${oauthSources}; frame-src 'self' ${extraOrigin} ${oauthSources}; frame-ancestors 'none'; upgrade-insecure-requests;`
     : null;
 
 export function proxy(request) {
