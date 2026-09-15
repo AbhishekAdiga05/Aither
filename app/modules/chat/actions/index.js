@@ -4,16 +4,34 @@ import db from "@/lib/db";
 import { currentUser } from "@/app/modules/authentication/actions";
 import { MessageRole, MessageType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { generateText } from "ai";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { CHAT_SYSTEM_PROMPT } from "@/lib/prompt";
 import { DEFAULT_MODEL_ID } from "@/lib/ai-models";
-
-const provider = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
+import { getAllowedFreeModelIds } from "@/lib/free-models.mjs";
 
 const resolveModelId = (model) => model || DEFAULT_MODEL_ID;
+
+
+
+/**
+ * Validate that a model ID is in the allowed free-model list.
+ * Returns null on success, or a structured error object on failure.
+ */
+async function validateModel(modelId) {
+  try {
+    const allowed = await getAllowedFreeModelIds();
+    if (!allowed.includes(modelId)) {
+      return {
+        success: false,
+        message:
+          "The selected model is unavailable in this app. Please pick a different model.",
+        code: "MODEL_NOT_ALLOWED",
+      };
+    }
+  } catch {
+    // If we can't fetch the catalog, allow the request — the provider
+    // itself will reject truly invalid models.
+  }
+  return null;
+}
 
 export const createMessageInChat = async (values, chatId) => {
   const user = await currentUser();
@@ -46,58 +64,30 @@ export const createMessageInChat = async (values, chatId) => {
 
   model = resolveModelId(model);
 
+  const modelError = await validateModel(model);
+  if (modelError) return modelError;
+
+  // ✅ Only persist the user message. The streaming /api/chat route (via the
+  // useChat hook's sendMessage / regenerate) handles all AI responses.
+  // This path is only kept for legacy compatibility — the primary UI path is
+  // the streaming route, so we intentionally do NOT call generateText() here.
   const userMessage = await db.message.create({
     data: {
       model,
-      content,
+      content: JSON.stringify([{ type: "text", text: content }]),
       messageRole: MessageRole.USER,
       messageType: MessageType.NORMAL,
       chatId,
     },
   });
 
-  // Fetch all messages (including the one just created) for AI context
-  const previousMessages = await db.message.findMany({
-    where: { chatId },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const aiMessages = previousMessages.map((msg) => ({
-    role: msg.messageRole === MessageRole.USER ? "user" : "assistant",
-    content: msg.content,
-  }));
-
-  let assistantContent = null;
-
-  try {
-    const result = await generateText({
-      model: provider.chat(model),
-      system: CHAT_SYSTEM_PROMPT,
-      messages: aiMessages,
-    });
-    assistantContent = result.text;
-  } catch (error) {
-    console.error("AI generation error:", error);
-    return { success: false, message: "Failed to generate AI response" };
-  }
-
-  const Assistantmessage = await db.message.create({
-    data: {
-      model,
-      chatId,
-      content: assistantContent,
-      messageRole: MessageRole.ASSISTANT,
-      messageType: MessageType.NORMAL,
-    },
-  });
-
   revalidatePath(`/chat/${chatId}`);
   return {
     success: true,
-    message: "Chat created successfully",
+    message: "Message saved",
     data: {
       userMessage,
-      Assistantmessage,
+      Assistantmessage: null,
     },
   };
 };
@@ -107,14 +97,31 @@ export const createChatWithMessage = async (values) => {
     const user = await currentUser();
     if (!user) return { success: false, message: "Unauthorized user" };
 
-    const { content, model: inputModel } = values;
+    const { content, model: inputModel, files } = values;
     if (!content || !content.trim()) {
       return { success: false, message: "Message content is required" };
     }
 
     const model = resolveModelId(inputModel);
 
+    const modelError = await validateModel(model);
+    if (modelError) return modelError;
+
     const title = content.slice(0, 50) + (content.length > 50 ? "..." : "");
+
+    // Store the user message as both text and file parts, matching the
+    // format the streaming API route writes to the DB so hydration works.
+    const parts = [
+      { type: "text", text: content },
+      ...(Array.isArray(files)
+        ? files.map((f) => ({
+            type: "file",
+            mediaType: f.mediaType,
+            url: f.url,
+            filename: f.filename,
+          }))
+        : []),
+    ];
 
     // Create chat WITH initial user message
     const chat = await db.chat.create({
@@ -124,7 +131,7 @@ export const createChatWithMessage = async (values) => {
         userId: user.id,
         messages: {
           create: {
-            content,
+            content: JSON.stringify(parts),
             messageRole: MessageRole.USER,
             messageType: MessageType.NORMAL,
             model,
@@ -235,8 +242,10 @@ export const getChatById = async (chatId) => {
 
 /**
  * Generate only the AI response for an existing chat.
- * Used by auto-trigger — the user message already exists in DB, so we must
- * NOT create another one (that would cause duplicates).
+ * NOTE: This server action is kept for backwards-compatibility but the
+ * primary path now goes through the streaming /api/chat route via the
+ * useChat hook's regenerate() call — which is non-blocking and streams
+ * tokens to the UI in real time. Prefer that path over this one.
  */
 export const generateAiResponse = async (chatId) => {
   const user = await currentUser();
@@ -251,46 +260,13 @@ export const generateAiResponse = async (chatId) => {
     return { success: false, message: "Chat not found or has no model" };
   }
 
-  const model = resolveModelId(chat.model);
-
-  const previousMessages = await db.message.findMany({
-    where: { chatId },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const aiMessages = previousMessages.map((msg) => ({
-    role: msg.messageRole === MessageRole.USER ? "user" : "assistant",
-    content: msg.content,
-  }));
-
-  let assistantContent = null;
-  try {
-    const result = await generateText({
-      model: provider.chat(model),
-      system: CHAT_SYSTEM_PROMPT,
-      messages: aiMessages,
-    });
-    assistantContent = result.text;
-  } catch (error) {
-    console.error("AI generation error (auto-trigger):", error);
-    return { success: false, message: "Failed to generate AI response" };
-  }
-
-  const assistantMessage = await db.message.create({
-    data: {
-      model,
-      chatId,
-      content: assistantContent,
-      messageRole: MessageRole.ASSISTANT,
-      messageType: MessageType.NORMAL,
-    },
-  });
-
-  revalidatePath(`/chat/${chatId}`);
+  // Signal to the caller that it should use the streaming route instead.
+  // The client-side auto-trigger already calls regenerate() via useChat,
+  // so this server action should never be reached in normal operation.
   return {
-    success: true,
-    message: "AI response generated",
-    data: { assistantMessage },
+    success: false,
+    message: "Use the streaming /api/chat route for AI responses.",
+    code: "USE_STREAMING_ROUTE",
   };
 };
 

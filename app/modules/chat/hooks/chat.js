@@ -149,6 +149,9 @@ export const useCreateChat = () => {
 
         // Redirect WITH autoTrigger to stream AI response
         router.push(`/chat/${chat.id}?autoTrigger=true`);
+      } else if (!res.success) {
+        // Server returned a structured error (e.g. model unavailable)
+        toast.error(res.message || "Failed to create chat");
       }
     },
     onError: (error) => {

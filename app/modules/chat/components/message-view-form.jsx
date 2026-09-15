@@ -8,8 +8,9 @@ import MessageForm from "./message-form";
 import { useChat } from "@ai-sdk/react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Square } from "lucide-react";
+import { RefreshCw, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { filesToFileUIParts } from "../lib/attachments";
 
 const getMessageParts = (content) => {
   try {
@@ -24,6 +25,73 @@ const getMessageParts = (content) => {
 
   return [{ type: "text", text: content }];
 };
+
+/**
+ * Extract a user-friendly error message from an AI SDK / fetch error.
+ * The error can be an Error, a Response, or a nested SDK error object.
+ */
+async function extractErrorMessage(err) {
+  if (!err) return "Something went wrong. Please try again.";
+
+  // The AI SDK may pass the raw Response — read its JSON body for the
+  // server's classified error message.
+  if (err instanceof Response || typeof err?.json === "function") {
+    try {
+      const body = await err.clone().json();
+      if (body?.error) return body.error;
+      if (body?.message) return body.message;
+    } catch {
+      // Can't parse body, fall through.
+    }
+    return "The AI model failed to respond. Try a different model.";
+  }
+
+  // Try multiple paths where the message might live
+  let raw =
+    err.message ??
+    err.error?.message ??
+    err.cause?.message ??
+    err.body?.error ??
+    "";
+
+  // If raw is JSON, unwrap the nested error
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed.error) raw = parsed.error;
+      else if (parsed.message) raw = parsed.message;
+    } catch {
+      // Not JSON — use as-is.
+    }
+  }
+
+  if (!raw) return "Something went wrong. Please try again.";
+
+  // Map technical messages to actionable user-friendly text
+  if (/fetch failed|network|ECONNREFUSED|ENOTFOUND/i.test(raw)) {
+    return "Could not reach the AI provider. Check your connection and try again.";
+  }
+  if (/timeout|abort/i.test(raw)) {
+    return "The model took too long to respond. Try switching to a faster model.";
+  }
+  if (/401|unauthorized/i.test(raw)) {
+    return "Authentication error. Please refresh the page.";
+  }
+  if (/429|rate.?limit|provider returned error/i.test(raw)) {
+    return "This model is overloaded. Switch to a different model and try again.";
+  }
+  if (/403|forbidden|agentic|harness/i.test(raw)) {
+    return "This model is not available for chat. Please switch to a different model.";
+  }
+  if (/404|not.?found|no endpoints/i.test(raw)) {
+    return "This model is currently unavailable. Please switch to a different model.";
+  }
+  if (/402|insufficient|credits/i.test(raw)) {
+    return "This model requires credits. Please switch to a free model.";
+  }
+
+  return raw.length > 120 ? "The AI model returned an error. Try a different model." : raw;
+}
 
 const getMessageTextContent = (message) =>
   message.parts
@@ -72,18 +140,20 @@ const MessageViewWithForm = ({ chatId }) => {
     stop,
     status,
     setMessages,
+    clearError,
     error: chatError,
   } = useChat({
     api: "/api/chat",
     initialMessages,
-    experimental_throttle: 30,
+    experimental_throttle: 8, // reduced from 30 — smoother streaming rendering
     body: {
       chatId,
       model: chatModel,
     },
-    onError: (e) => {
+    onError: async (e) => {
       console.error("Chat stream error:", e);
-      toast.error(e.message || "Failed to generate AI response.");
+      const msg = await extractErrorMessage(e);
+      toast.error(msg, { duration: 6000 });
     },
     onFinish: (message) => {
       queryClient.invalidateQueries({ queryKey: ["chats"] });
@@ -91,23 +161,61 @@ const MessageViewWithForm = ({ chatId }) => {
     },
   });
 
+  // Deduplicated: onError above already shows the toast, so we only handle
+  // persistent chatError state (set when the stream closes with an error but
+  // onError wasn't called, e.g. network interruption after stream started).
   React.useEffect(() => {
-    if (chatError) {
-      // Surface fetch/stream errors even when they arrive via the hook.
-      toast.error(chatError.message || "Failed to generate AI response.");
+    if (chatError && status === "error") {
+      extractErrorMessage(chatError).then((msg) => toast.error(msg, { duration: 6000 }));
     }
-  }, [chatError]);
+  }, [chatError, status]);
 
   const [input, setInput] = useState("");
+  // Track model selected inside MessageForm so it flows through sendMessage body
+  const [selectedModel, setSelectedModel] = useState(null);
   const handleInputChange = (e) => setInput(e.target.value);
-  const handleSubmit = (e, options) => {
+  const handleSubmit = async (e, options) => {
     e?.preventDefault?.();
-    if (!input.trim()) return;
-    sendMessage({ text: input }, options);
-    setInput("");
+    const files = options?.files || [];
+    if (!input.trim() && files.length === 0) return;
+
+    // Convert File objects to FileUIPart[] (base64 data URLs) so the
+    // streaming API can attach images/files to the user message.
+    const parts = files.length ? await filesToFileUIParts(files) : [];
+
+    const payload = {
+      ...(input.trim() ? { text: input } : {}),
+      ...(parts.length ? { files: parts } : {}),
+    };
+
+    // Merge the actively-selected model into the body so it overrides the
+    // useChat default body (which may have an undefined chatModel during
+    // initial hydration — fixing the silent model-mismatch bug).
+    const bodyOverride = {
+      ...options?.body,
+      model: selectedModel ?? options?.body?.model ?? chatModel,
+    };
+
+    try {
+      await sendMessage(payload, { ...options, body: bodyOverride });
+      setInput("");
+    } catch (err) {
+      // The stream error is already surfaced via useChat's onError + the
+      // inline retry banner — just keep the typed text so nothing is lost.
+      console.error("Failed to send message:", err);
+    }
   };
 
   const isLoading = status === "submitted" || status === "streaming";
+
+  // ✅ One-tap recovery when a model fails: re-send the last user message
+  // on the streaming route (the server auto-falls-back to another free model).
+  const handleRetry = () => {
+    clearError();
+    regenerate({
+      body: { skipUserMessage: true, chatId, model: chatModel },
+    });
+  };
 
   // Hydrate messages once the chat loads (only when we have no messages yet).
   useEffect(() => {
@@ -124,15 +232,24 @@ const MessageViewWithForm = ({ chatId }) => {
     if (
       autoTrigger &&
       !hasAutoTriggeredRef.current &&
+      // Only fire when the stream is idle — prevents double-fire during React
+      // re-renders that happen after the initial regenerate() call.
+      status === "ready" &&
       initialMessages.length === 1 &&
       initialMessages[0].role === "user" &&
       messages.length >= 1 &&
       last?.role === "user"
     ) {
       hasAutoTriggeredRef.current = true;
-      regenerate({
-        body: { skipUserMessage: true, chatId, model: chatModel },
-      });
+      try {
+        regenerate({
+          body: { skipUserMessage: true, chatId, model: chatModel },
+        });
+      } catch (err) {
+        // If the stream transport throws synchronously, fall back to the
+        // inline retry banner so the user is never left stuck.
+        console.error("Auto-trigger regenerate failed:", err);
+      }
     }
   }, [
     autoTrigger,
@@ -141,6 +258,7 @@ const MessageViewWithForm = ({ chatId }) => {
     regenerate,
     chatId,
     chatModel,
+    status,
   ]);
 
   const lastMessage = messages[messages.length - 1];
@@ -215,6 +333,32 @@ const MessageViewWithForm = ({ chatId }) => {
             </div>
           )}
 
+          {/* AI Error Banner with one-tap retry */}
+          {status === "error" &&
+            messages[messages.length - 1]?.role === "user" && (
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-destructive">
+                    The AI didn&apos;t respond.
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    The model may be overloaded or briefly unavailable. Retry
+                    now and the app will fall back to another working model.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRetry}
+                  className="shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                  Try again
+                </Button>
+              </div>
+            )}
+
           {/* Scroll anchor */}
           <div ref={messagesEndRef} />
         </div>
@@ -232,6 +376,7 @@ const MessageViewWithForm = ({ chatId }) => {
             isLoading={isLoading}
             isStreaming={isStreamingAssistant}
             onStop={stop}
+            onModelSelect={setSelectedModel}
           />
         </div>
       </div>
